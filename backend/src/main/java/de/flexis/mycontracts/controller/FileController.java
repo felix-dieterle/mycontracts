@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import de.flexis.mycontracts.controller.dto.FileDetailResponse;
+import de.flexis.mycontracts.controller.dto.FileListItemResponse;
 
 import java.net.MalformedURLException;
 import java.nio.file.Path;
@@ -32,6 +33,11 @@ public class FileController {
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().build();
         }
+    }
+
+    @GetMapping
+    public java.util.List<FileListItemResponse> list() {
+        return storageService.list().stream().map(FileListItemResponse::from).toList();
     }
 
     @GetMapping("/{id}")

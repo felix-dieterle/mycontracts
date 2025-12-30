@@ -79,6 +79,10 @@ public class FileStorageService {
         return ocrFileRepository.findByMatchedFileId(fileId);
     }
 
+    public java.util.List<StoredFile> list() {
+        return storedFileRepository.findAll();
+    }
+
     private String checksum(Path file) throws IOException {
         try (InputStream in = Files.newInputStream(file)) {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
