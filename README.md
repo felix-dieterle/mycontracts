@@ -19,8 +19,26 @@ Frontend: `http://localhost:5173`
 Wichtige Umgebungsvariablen (in `.env`):
 - `FILE_STORAGE_PATH` – Verzeichnis zum Speichern hochgeladener Dateien (Default: `/data/files`).
 - `WATCH_DIR` – beobachtetes Verzeichnis für OCR JSONs (Default: `/data/incoming`).
+- `watcher.scan-interval-ms` – Scanintervall in Millisekunden (Default: `5000`).
+- `watcher.max-retries` – Anzahl der Wiederholungsversuche für nicht zugeordnete OCRs (Default: `5`).
 - `LLM_PROVIDER` / `GEMINI_API_KEY` – LLM Konfiguration (optional).
 - `SPRING_DATASOURCE_URL` – SQLite DataSource URL (Default: `jdbc:sqlite:mycontracts.db`).
+
+### Watcher Service
+
+Der Watcher überwacht das Verzeichnis `WATCH_DIR` nach OCR JSON Dateien mit dem Suffix `_ocr.json` und versucht, diese automatisch einem bereits hochgeladenen `StoredFile` zuzuordnen.
+
+Wichtiges Verhalten:
+- Matching-Strategie: Ein OCR mit Namen `vertragxy_ocr.json` wird gegen vorhandene Dateien verglichen, indem die Basis des Dateinamens (`vertragxy`) mit dem Basename (ohne Extension) der `StoredFile.filename` verglichen wird (z. B. `vertragxy.pdf` matcht `vertragxy_ocr.json`).
+- Statuswerte in `OcrFile`: `PENDING` (noch nicht zugeordnet), `MATCHED` (erfolgreich zugeordnet), `FAILED` (nach zu vielen Versuchen nicht zugeordnet), `PROCESSING`, `DONE`.
+- Wiederholungen: Der Watcher versucht periodisch, `PENDING` OCRs neu zu matchen. Die Anzahl der Versuche steuerst du mit `watcher.max-retries`.
+- Fehler/Permissions: Wenn das Watch-Verzeichnis nicht zugreifbar ist (z. B. mangelnde Berechtigungen), deaktiviert sich der Watcher automatisch beim Start und loggt eine Warnung, statt die Anwendung abbrechen zu lassen.
+
+Operative Hinweise:
+- `WATCH_DIR` kann ein gemountetes Verzeichnis sein; achte auf Berechtigungen des Nutzerkontos, das den Backend-Prozess ausführt.
+- Testumgebungen verwenden standardmäßig ein temporäres Watch- und Storage-Verzeichnis via `DynamicPropertySource` in Tests.
+
+
 
 ## Wichtige Endpunkte (MVP)
 

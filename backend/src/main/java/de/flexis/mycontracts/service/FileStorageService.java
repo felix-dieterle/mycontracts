@@ -18,6 +18,8 @@ import java.util.HexFormat;
 @Service
 public class FileStorageService {
 
+    private static final long MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10MB hard limit
+
     private final Path storagePath;
     private final StoredFileRepository storedFileRepository;
 
@@ -29,9 +31,20 @@ public class FileStorageService {
     }
 
     public StoredFile store(MultipartFile file) throws IOException {
-        String filename = file.getOriginalFilename();
-        if (filename == null) filename = "file";
-        Path dest = storagePath.resolve(filename);
+        String filename = sanitizeFilename(file.getOriginalFilename());
+
+        long size = file.getSize();
+        if (size <= 0) {
+            throw new IllegalArgumentException("File is empty");
+        }
+        if (size > MAX_SIZE_BYTES) {
+            throw new IllegalArgumentException("File too large");
+        }
+
+        Path dest = storagePath.resolve(filename).normalize();
+        if (!dest.startsWith(storagePath)) {
+            throw new IllegalArgumentException("Invalid file path");
+        }
 
         // copy stream to destination atomically
         try (InputStream in = file.getInputStream()) {
@@ -61,5 +74,20 @@ public class FileStorageService {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private String sanitizeFilename(String original) {
+        String filename = original != null ? original.trim() : "file";
+        if (filename.isEmpty()) filename = "file";
+
+        // Normalize separators and drop any path components
+        filename = filename.replace('\\', '/');
+        if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
+            throw new IllegalArgumentException("Invalid filename");
+        }
+
+        filename = Path.of(filename).getFileName().toString();
+
+        return filename;
     }
 }

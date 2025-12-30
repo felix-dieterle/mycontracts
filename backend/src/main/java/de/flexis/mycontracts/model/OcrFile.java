@@ -30,6 +30,10 @@ public class OcrFile {
     private Instant createdAt = Instant.now();
     private Instant processedAt;
 
+    // retry bookkeeping
+    private int retryCount = 0;
+    private Instant lastAttempt;
+
     public OcrFile() {}
 
     public OcrFile(String path, String rawJson) {
@@ -95,5 +99,21 @@ public class OcrFile {
 
     public void setProcessedAt(Instant processedAt) {
         this.processedAt = processedAt;
+    }
+
+    public int getRetryCount() {
+        return retryCount;
+    }
+
+    public void setRetryCount(int retryCount) {
+        this.retryCount = retryCount;
+    }
+
+    public Instant getLastAttempt() {
+        return lastAttempt;
+    }
+
+    public void setLastAttempt(Instant lastAttempt) {
+        this.lastAttempt = lastAttempt;
     }
 }

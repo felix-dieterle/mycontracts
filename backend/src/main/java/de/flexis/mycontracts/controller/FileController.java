@@ -25,8 +25,12 @@ public class FileController {
 
     @PostMapping("/upload")
     public ResponseEntity<StoredFile> upload(@RequestParam("file") MultipartFile file) throws Exception {
-        StoredFile sf = storageService.store(file);
-        return ResponseEntity.ok(sf);
+        try {
+            StoredFile sf = storageService.store(file);
+            return ResponseEntity.ok(sf);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @GetMapping("/{id}/download")

@@ -49,4 +49,29 @@ public class FileControllerIntegrationTest {
         Path stored = tempDir.resolve("test.txt");
         assert Files.exists(stored);
     }
+
+    @Test
+    void rejectPathTraversal() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", "../evil.txt", MediaType.TEXT_PLAIN_VALUE, "boom".getBytes());
+
+        mvc.perform(multipart("/api/files/upload").file(file))
+                .andExpect(status().isBadRequest());
+
+        Path outside = tempDir.resolve("../evil.txt");
+        Path sanitized = tempDir.resolve("evil.txt");
+        assert Files.notExists(outside.normalize());
+        assert Files.notExists(sanitized);
+    }
+
+    @Test
+    void rejectOversizedFile() throws Exception {
+        byte[] bigPayload = new byte[11 * 1024 * 1024]; // 11MB
+        MockMultipartFile file = new MockMultipartFile("file", "big.bin", MediaType.APPLICATION_OCTET_STREAM_VALUE, bigPayload);
+
+        mvc.perform(multipart("/api/files/upload").file(file))
+                .andExpect(status().isBadRequest());
+
+        Path stored = tempDir.resolve("big.bin");
+        assert Files.notExists(stored);
+    }
 }
