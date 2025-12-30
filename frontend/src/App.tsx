@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom'
 
 type FileSummary = {
   id: number
@@ -7,6 +8,8 @@ type FileSummary = {
   size?: number
   checksum?: string
   createdAt?: string
+  marker?: string
+  ocrStatus?: string | null
 }
 
 type OcrInfo = {
@@ -25,14 +28,29 @@ type FileDetail = FileSummary & {
 const apiBase = import.meta.env.VITE_API_URL || ''
 
 export default function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Navigate to="/files" replace />} />
+      <Route path="/files" element={<FilesShell />} />
+      <Route path="/files/:id" element={<FilesShell />} />
+      <Route path="*" element={<Navigate to="/files" replace />} />
+    </Routes>
+  )
+}
+
+function FilesShell() {
+  const params = useParams()
+  const navigate = useNavigate()
+  const selectedId = params.id ? Number(params.id) : null
+
   const [health, setHealth] = useState<'loading' | 'ok' | 'offline'>('loading')
   const [files, setFiles] = useState<FileSummary[]>([])
   const [listState, setListState] = useState<'idle' | 'loading' | 'error'>('idle')
-  const [selectedId, setSelectedId] = useState<number | null>(null)
   const [detail, setDetail] = useState<FileDetail | null>(null)
   const [detailState, setDetailState] = useState<'idle' | 'loading' | 'error'>('idle')
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const markerOptions = ['NEUTRAL', 'GOOD', 'REVIEW', 'URGENT']
 
   useEffect(() => {
     fetch(apiBase + '/api/health')
@@ -43,16 +61,15 @@ export default function App() {
 
   useEffect(() => {
     refreshList()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
     if (selectedId != null) {
       loadDetail(selectedId)
-    } else if (files.length > 0) {
-      setSelectedId(files[0].id)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedId, files])
+  }, [selectedId])
 
   async function refreshList() {
     setListState('loading')
@@ -62,8 +79,10 @@ export default function App() {
       if (!res.ok) throw new Error('List failed')
       const data: FileSummary[] = await res.json()
       setFiles(data)
-      if (data.length && selectedId == null) {
-        setSelectedId(data[0].id)
+
+      const currentExists = selectedId && data.some(f => f.id === selectedId)
+      if (data.length && (!selectedId || !currentExists)) {
+        navigate(`/files/${data[0].id}`, { replace: true })
       }
       setListState('idle')
     } catch (e) {
@@ -87,6 +106,22 @@ export default function App() {
     }
   }
 
+  async function updateMarker(marker: string) {
+    if (!selectedId) return
+    setError(null)
+    try {
+      const res = await fetch(apiBase + `/api/files/${selectedId}/marker`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ marker })
+      })
+      if (!res.ok) throw new Error('Marker update failed')
+      await Promise.all([refreshList(), loadDetail(selectedId)])
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }
+
   async function handleUpload(ev: React.FormEvent<HTMLFormElement>) {
     ev.preventDefault()
     const input = ev.currentTarget.elements.namedItem('file') as HTMLInputElement
@@ -101,7 +136,7 @@ export default function App() {
       if (!res.ok) throw new Error('Upload failed')
       const created: FileSummary = await res.json()
       await refreshList()
-      setSelectedId(created.id)
+      navigate(`/files/${created.id}`)
       input.value = ''
     } catch (e) {
       setError((e as Error).message)
@@ -110,7 +145,7 @@ export default function App() {
     }
   }
 
-  const selectedFile = files.find(f => f.id === selectedId) || null
+  const selectedFile = selectedId ? files.find(f => f.id === selectedId) || null : null
 
   return (
     <div style={styles.page}>
@@ -154,10 +189,14 @@ export default function App() {
                   borderColor: selectedId === f.id ? '#2d6cdf' : '#e5e7eb',
                   background: selectedId === f.id ? '#eef4ff' : '#fff'
                 }}
-                onClick={() => setSelectedId(f.id)}
+                onClick={() => navigate(`/files/${f.id}`)}
               >
                 <div style={styles.listTitle}>{f.filename}</div>
-                <div style={styles.listMeta}>{formatBytes(f.size)} · {formatDate(f.createdAt)}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                  <span style={styles.listMeta}>{formatBytes(f.size)} · {formatDate(f.createdAt)}</span>
+                  {f.marker && <span style={{ ...styles.badge, ...markerBadgeStyle(f.marker) }}>{f.marker}</span>}
+                  {f.ocrStatus && <span style={{ ...styles.badge, background: '#e0f2fe', color: '#075985' }}>OCR {f.ocrStatus}</span>}
+                </div>
               </li>
             ))}
           </ul>
@@ -180,6 +219,18 @@ export default function App() {
               <div>
                 <div style={styles.label}>Checksumme</div>
                 <div style={styles.code}>{detail.checksum || 'n/a'}</div>
+              </div>
+              <div>
+                <div style={styles.label}>Marker</div>
+                <select
+                  value={detail.marker || 'NEUTRAL'}
+                  onChange={e => updateMarker(e.target.value)}
+                  style={styles.select}
+                >
+                  {markerOptions.map(m => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <a href={`${apiBase}/api/files/${detail.id}/download`} style={styles.link}>Download</a>
@@ -250,4 +301,19 @@ const styles: Record<string, React.CSSProperties> = {
   pre: { background: '#0f172a', color: '#e2e8f0', padding: 12, borderRadius: 8, maxHeight: 260, overflow: 'auto', fontSize: 12 },
   code: { fontFamily: 'monospace', fontSize: 12, color: '#0f172a', background: '#f1f5f9', padding: '4px 6px', borderRadius: 6 },
   ocrBox: { display: 'flex', flexDirection: 'column', gap: 6 },
+  select: { padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#fff' },
+}
+
+function markerBadgeStyle(marker: string): React.CSSProperties {
+  const base = { border: '1px solid transparent' }
+  switch (marker) {
+    case 'GOOD':
+      return { ...base, background: '#dcfce7', color: '#166534', borderColor: '#bbf7d0' }
+    case 'REVIEW':
+      return { ...base, background: '#fef9c3', color: '#854d0e', borderColor: '#fde68a' }
+    case 'URGENT':
+      return { ...base, background: '#fee2e2', color: '#b91c1c', borderColor: '#fecaca' }
+    default:
+      return { ...base, background: '#e2e8f0', color: '#475569', borderColor: '#cbd5e1' }
+  }
 }
