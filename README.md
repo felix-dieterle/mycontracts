@@ -378,15 +378,34 @@ npm run dev
 Frontend läuft auf `http://localhost:5173`
 
 ### Tests
+
+#### Backend Tests
 ```bash
-# Backend
 cd backend
 mvn test
-
-# Frontend (falls vorhanden)
-cd frontend
-npm test
 ```
+
+#### Frontend UI Tests
+Siehe [TESTING.md](TESTING.md) für automatisierte UI-Tests mit Playwright:
+
+```bash
+cd frontend
+
+# Tests ausführen (Screenshots werden aufgenommen)
+npm run test:ui
+
+# Tests mit Browserfenster anschauen
+npm run test:ui:headed
+
+# Testbericht öffnen
+npx playwright show-report
+```
+
+Die UI-Tests:
+- ✅ Navigieren durch die gesamte App
+- ✅ Machen Screenshots bei jedem Schritt
+- ✅ Können als visuelle Dokumentation verwendet werden
+- ✅ Generieren HTML-Reports mit Trace Logs
 
 ## Nächste Schritte / Roadmap
 
