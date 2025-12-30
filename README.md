@@ -38,6 +38,19 @@ Operative Hinweise:
 - `WATCH_DIR` kann ein gemountetes Verzeichnis sein; achte auf Berechtigungen des Nutzerkontos, das den Backend-Prozess ausführt.
 - Testumgebungen verwenden standardmäßig ein temporäres Watch- und Storage-Verzeichnis via `DynamicPropertySource` in Tests.
 
+### Observability
+
+- Actuator Health: `GET /actuator/health` (Basis-Check)
+- Micrometer Metrics: `GET /actuator/metrics` (Übersicht) und `GET /actuator/metrics/{name}` für Details
+- Prometheus Scrape: `GET /actuator/prometheus` (falls `management.endpoints.web.exposure.include` auf `prometheus` steht; im Default aktiv)
+- Wichtige Counter:
+	- `watcher.ocr.matched` – zugeordnete OCRs
+	- `watcher.ocr.pending` – aktuell noch nicht zugeordnete OCRs
+	- `watcher.ocr.failed` – endgültig fehlgeschlagene Zuordnungen nach Max-Retries
+	- `watcher.ocr.retry` – erneute Zuordnungsversuche (inkl. Backoff)
+  
+Hinweise: Actuator und Micrometer sind im Backend aktiviert; kein zusätzlicher Code notwendig. Für produktive Scrapes kannst du `management.endpoints.web.base-path` oder Credentials in `application.yml`/`.env` anpassen.
+
 
 
 ## Wichtige Endpunkte (MVP)

@@ -2,6 +2,9 @@ package de.flexis.mycontracts.service;
 
 import de.flexis.mycontracts.model.StoredFile;
 import de.flexis.mycontracts.repository.StoredFileRepository;
+import de.flexis.mycontracts.repository.OcrFileRepository;
+import de.flexis.mycontracts.model.OcrFile;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,11 +25,14 @@ public class FileStorageService {
 
     private final Path storagePath;
     private final StoredFileRepository storedFileRepository;
+    private final OcrFileRepository ocrFileRepository;
 
     public FileStorageService(@Value("${FILE_STORAGE_PATH:/data/files}") String storagePath,
-                              StoredFileRepository storedFileRepository) throws IOException {
+                              StoredFileRepository storedFileRepository,
+                              OcrFileRepository ocrFileRepository) throws IOException {
         this.storagePath = Path.of(storagePath);
         this.storedFileRepository = storedFileRepository;
+        this.ocrFileRepository = ocrFileRepository;
         Files.createDirectories(this.storagePath);
     }
 
@@ -62,6 +68,15 @@ public class FileStorageService {
         return storedFileRepository.findById(id)
                 .map(sf -> Path.of(sf.getPath()))
                 .orElseThrow(() -> new IllegalArgumentException("File not found"));
+    }
+
+    public StoredFile get(Long id) {
+        return storedFileRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("File not found"));
+    }
+
+    public Optional<OcrFile> findOcrForFile(Long fileId) {
+        return ocrFileRepository.findByMatchedFileId(fileId);
     }
 
     private String checksum(Path file) throws IOException {

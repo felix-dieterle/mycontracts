@@ -9,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import de.flexis.mycontracts.controller.dto.FileDetailResponse;
 
 import java.net.MalformedURLException;
 import java.nio.file.Path;
@@ -30,6 +31,17 @@ public class FileController {
             return ResponseEntity.ok(sf);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<FileDetailResponse> detail(@PathVariable Long id) {
+        try {
+            StoredFile file = storageService.get(id);
+            var ocr = storageService.findOcrForFile(id).orElse(null);
+            return ResponseEntity.ok(FileDetailResponse.from(file, ocr));
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.notFound().build();
         }
     }
 

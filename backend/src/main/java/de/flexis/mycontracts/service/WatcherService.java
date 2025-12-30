@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.springframework.beans.factory.ObjectProvider;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -43,14 +45,15 @@ public class WatcherService {
     public WatcherService(@Value("${WATCH_DIR:/data/incoming}") String watchDir,
                          StoredFileRepository storedFileRepository,
                          OcrFileRepository ocrFileRepository,
-                         MeterRegistry meterRegistry) throws IOException {
+                         ObjectProvider<MeterRegistry> meterRegistryProvider) throws IOException {
         this.watchDir = Path.of(watchDir);
         this.storedFileRepository = storedFileRepository;
         this.ocrFileRepository = ocrFileRepository;
-        this.matchedCounter = meterRegistry.counter("watcher.ocr.matched");
-        this.pendingCounter = meterRegistry.counter("watcher.ocr.pending");
-        this.failedCounter = meterRegistry.counter("watcher.ocr.failed");
-        this.retryCounter = meterRegistry.counter("watcher.ocr.retry");
+        MeterRegistry registry = meterRegistryProvider.getIfAvailable(SimpleMeterRegistry::new);
+        this.matchedCounter = registry.counter("watcher.ocr.matched");
+        this.pendingCounter = registry.counter("watcher.ocr.pending");
+        this.failedCounter = registry.counter("watcher.ocr.failed");
+        this.retryCounter = registry.counter("watcher.ocr.retry");
         try {
             Files.createDirectories(this.watchDir);
         } catch (IOException e) {
