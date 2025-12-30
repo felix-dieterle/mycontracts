@@ -24,6 +24,9 @@ public class StoredFile {
     @Enumerated(EnumType.STRING)
     private MarkerStatus marker = MarkerStatus.NEUTRAL;
 
+    @Lob
+    private String note;
+
     @ManyToOne
     @JoinColumn(name = "contract_id")
     private Contract contract;
@@ -87,6 +90,14 @@ public class StoredFile {
 
     public void setMarker(MarkerStatus marker) {
         this.marker = marker;
+    }
+
+    public String getNote() {
+        return note;
+    }
+
+    public void setNote(String note) {
+        this.note = note;
     }
 
     public Contract getContract() {

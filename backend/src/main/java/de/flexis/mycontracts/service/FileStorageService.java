@@ -106,6 +106,13 @@ public class FileStorageService {
         return storedFileRepository.save(file);
     }
 
+    public StoredFile updateNote(Long id, String note) {
+        StoredFile file = storedFileRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("File not found"));
+        file.setNote(note);
+        return storedFileRepository.save(file);
+    }
+
     private String checksum(Path file) throws IOException {
         try (InputStream in = Files.newInputStream(file)) {
             MessageDigest md = MessageDigest.getInstance("SHA-256");

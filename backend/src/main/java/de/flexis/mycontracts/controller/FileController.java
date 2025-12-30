@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import de.flexis.mycontracts.controller.dto.FileDetailResponse;
 import de.flexis.mycontracts.controller.dto.FileListItemResponse;
 import de.flexis.mycontracts.controller.dto.UpdateMarkerRequest;
+import de.flexis.mycontracts.controller.dto.UpdateNoteRequest;
 import de.flexis.mycontracts.model.OcrFile;
 
 import java.net.MalformedURLException;
@@ -61,6 +62,16 @@ public class FileController {
     public ResponseEntity<StoredFile> updateMarker(@PathVariable Long id, @RequestBody UpdateMarkerRequest request) {
         try {
             StoredFile updated = storageService.updateMarker(id, request.marker());
+            return ResponseEntity.ok(updated);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PatchMapping("/{id}/note")
+    public ResponseEntity<StoredFile> updateNote(@PathVariable Long id, @RequestBody UpdateNoteRequest request) {
+        try {
+            StoredFile updated = storageService.updateNote(id, request.note());
             return ResponseEntity.ok(updated);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().build();

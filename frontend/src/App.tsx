@@ -23,6 +23,7 @@ type OcrInfo = {
 
 type FileDetail = FileSummary & {
   ocr?: OcrInfo | null
+  note?: string | null
 }
 
 const apiBase = import.meta.env.VITE_API_URL || ''
@@ -51,6 +52,10 @@ function FilesShell() {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const markerOptions = ['NEUTRAL', 'GOOD', 'REVIEW', 'URGENT']
+  const [markerFilter, setMarkerFilter] = useState<string>('ALL')
+  const [ocrFilter, setOcrFilter] = useState<string>('ALL')
+  const [noteDraft, setNoteDraft] = useState<string>('')
+  const [savingNote, setSavingNote] = useState(false)
 
   useEffect(() => {
     fetch(apiBase + '/api/health')
@@ -70,6 +75,15 @@ function FilesShell() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedId])
+
+  useEffect(() => {
+    // If current selection is filtered out, jump to first in filtered list
+    const filtered = getFiltered(files, markerFilter, ocrFilter)
+    const inFiltered = selectedId && filtered.some(f => f.id === selectedId)
+    if (!inFiltered && filtered.length > 0) {
+      navigate(`/files/${filtered[0].id}`, { replace: true })
+    }
+  }, [files, markerFilter, ocrFilter, selectedId, navigate])
 
   async function refreshList() {
     setListState('loading')
@@ -99,6 +113,7 @@ function FilesShell() {
       if (!res.ok) throw new Error('Detail failed')
       const data: FileDetail = await res.json()
       setDetail(data)
+      setNoteDraft(data.note || '')
       setDetailState('idle')
     } catch (e) {
       setDetailState('error')
@@ -119,6 +134,25 @@ function FilesShell() {
       await Promise.all([refreshList(), loadDetail(selectedId)])
     } catch (e) {
       setError((e as Error).message)
+    }
+  }
+
+  async function saveNote() {
+    if (!selectedId) return
+    setSavingNote(true)
+    setError(null)
+    try {
+      const res = await fetch(apiBase + `/api/files/${selectedId}/note`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note: noteDraft })
+      })
+      if (!res.ok) throw new Error('Note update failed')
+      await loadDetail(selectedId)
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setSavingNote(false)
     }
   }
 
@@ -146,6 +180,7 @@ function FilesShell() {
   }
 
   const selectedFile = selectedId ? files.find(f => f.id === selectedId) || null : null
+  const visibleFiles = getFiltered(files, markerFilter, ocrFilter)
 
   return (
     <div style={styles.page}>
@@ -179,9 +214,26 @@ function FilesShell() {
             {listState === 'loading' && <span style={styles.badge}>lädt...</span>}
             {listState === 'error' && <span style={{ ...styles.badge, background: '#ffe3e3', color: '#b00020' }}>Fehler</span>}
           </div>
-          {files.length === 0 && <p style={styles.muted}>Noch keine Dateien.</p>}
+          <div style={styles.filterRow}>
+            <label style={styles.label}>Marker
+              <select value={markerFilter} onChange={e => setMarkerFilter(e.target.value)} style={styles.select}>
+                <option value="ALL">Alle</option>
+                {markerOptions.map(m => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </label>
+            <label style={styles.label}>OCR
+              <select value={ocrFilter} onChange={e => setOcrFilter(e.target.value)} style={styles.select}>
+                <option value="ALL">Alle</option>
+                <option value="MATCHED">MATCHED</option>
+                <option value="PENDING">PENDING</option>
+                <option value="FAILED">FAILED</option>
+                <option value="NONE">Keine</option>
+              </select>
+            </label>
+          </div>
+          {visibleFiles.length === 0 && <p style={styles.muted}>Keine Dateien für diesen Filter.</p>}
           <ul style={styles.list}>
-            {files.map(f => (
+            {visibleFiles.map(f => (
               <li
                 key={f.id}
                 style={{
@@ -195,11 +247,19 @@ function FilesShell() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                   <span style={styles.listMeta}>{formatBytes(f.size)} · {formatDate(f.createdAt)}</span>
                   {f.marker && <span style={{ ...styles.badge, ...markerBadgeStyle(f.marker) }}>{f.marker}</span>}
-                  {f.ocrStatus && <span style={{ ...styles.badge, background: '#e0f2fe', color: '#075985' }}>OCR {f.ocrStatus}</span>}
+                  {f.ocrStatus && <span style={{ ...styles.badge, ...ocrBadgeStyle(f.ocrStatus) }}>OCR {f.ocrStatus}</span>}
                 </div>
               </li>
             ))}
           </ul>
+          <div style={styles.legendRow}>
+            <span style={{ ...styles.badge, ...markerBadgeStyle('GOOD') }}>GOOD</span>
+            <span style={{ ...styles.badge, ...markerBadgeStyle('REVIEW') }}>REVIEW</span>
+            <span style={{ ...styles.badge, ...markerBadgeStyle('URGENT') }}>URGENT</span>
+            <span style={{ ...styles.badge, ...ocrBadgeStyle('MATCHED') }}>OCR MATCHED</span>
+            <span style={{ ...styles.badge, ...ocrBadgeStyle('PENDING') }}>OCR PENDING</span>
+            <span style={{ ...styles.badge, ...ocrBadgeStyle('FAILED') }}>OCR FAILED</span>
+          </div>
         </section>
 
         <section style={styles.card}>
@@ -231,6 +291,19 @@ function FilesShell() {
                     <option key={m} value={m}>{m}</option>
                   ))}
                 </select>
+              </div>
+              <div>
+                <div style={styles.label}>Notiz</div>
+                <textarea
+                  value={noteDraft}
+                  onChange={e => setNoteDraft(e.target.value)}
+                  placeholder="Kurze Notiz (Review, Risiken, ToDos)"
+                  rows={4}
+                  style={styles.textarea}
+                />
+                <button style={styles.secondaryButton} onClick={saveNote} disabled={savingNote}>
+                  {savingNote ? 'Speichere...' : 'Notiz speichern'}
+                </button>
               </div>
               <div>
                 <a href={`${apiBase}/api/files/${detail.id}/download`} style={styles.link}>Download</a>
@@ -265,6 +338,15 @@ function formatDate(iso?: string) {
   if (!iso) return 'n/a'
   const d = new Date(iso)
   return d.toLocaleString()
+}
+
+function getFiltered(files: FileSummary[], marker: string, ocr: string) {
+  return files.filter(f => {
+    const markerOk = marker === 'ALL' || (f.marker || 'NEUTRAL') === marker
+    const ocrValue = f.ocrStatus || 'NONE'
+    const ocrOk = ocr === 'ALL' || ocrValue === ocr
+    return markerOk && ocrOk
+  })
 }
 
 function prettyJson(raw?: string) {
@@ -302,6 +384,10 @@ const styles: Record<string, React.CSSProperties> = {
   code: { fontFamily: 'monospace', fontSize: 12, color: '#0f172a', background: '#f1f5f9', padding: '4px 6px', borderRadius: 6 },
   ocrBox: { display: 'flex', flexDirection: 'column', gap: 6 },
   select: { padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#fff' },
+  filterRow: { display: 'flex', gap: 12, flexWrap: 'wrap', margin: '8px 0' },
+  legendRow: { display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 },
+  textarea: { width: '100%', padding: 10, borderRadius: 10, border: '1px solid #cbd5e1', fontFamily: 'inherit', fontSize: 14, minHeight: 100 },
+  secondaryButton: { marginTop: 8, background: '#f8fafc', color: '#0f172a', border: '1px solid #cbd5e1', padding: '8px 12px', borderRadius: 8, cursor: 'pointer' },
 }
 
 function markerBadgeStyle(marker: string): React.CSSProperties {
@@ -315,5 +401,19 @@ function markerBadgeStyle(marker: string): React.CSSProperties {
       return { ...base, background: '#fee2e2', color: '#b91c1c', borderColor: '#fecaca' }
     default:
       return { ...base, background: '#e2e8f0', color: '#475569', borderColor: '#cbd5e1' }
+  }
+}
+
+function ocrBadgeStyle(status: string): React.CSSProperties {
+  const base = { border: '1px solid transparent' }
+  switch (status) {
+    case 'MATCHED':
+      return { ...base, background: '#dcfce7', color: '#166534', borderColor: '#bbf7d0' }
+    case 'PENDING':
+      return { ...base, background: '#fef9c3', color: '#854d0e', borderColor: '#fde68a' }
+    case 'FAILED':
+      return { ...base, background: '#fee2e2', color: '#b91c1c', borderColor: '#fecaca' }
+    default:
+      return { ...base, background: '#e0f2fe', color: '#075985', borderColor: '#bae6fd' }
   }
 }

@@ -14,6 +14,7 @@ public record FileDetailResponse(
         Long size,
         String checksum,
         MarkerStatus marker,
+                String note,
         Instant createdAt,
         OcrInfo ocr
 ) {
@@ -33,6 +34,7 @@ public record FileDetailResponse(
                 file.getSize(),
                 file.getChecksum(),
                                 file.getMarker(),
+                                file.getNote(),
                 file.getCreatedAt(),
                 ocr
         );
