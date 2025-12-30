@@ -31,6 +31,11 @@ public class FileControllerIntegrationTest {
         r.add("FILE_STORAGE_PATH", () -> tempDir.toString());
         // Ensure an in-memory JDBC DB is available for full context startup
         r.add("spring.datasource.url", () -> "jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1");
+        // Override driver and credentials so the in-memory DB works even if application.properties
+        // specifies a different JDBC driver (e.g., SQLite) for normal runs.
+        r.add("spring.datasource.driver-class-name", () -> "org.h2.Driver");
+        r.add("spring.datasource.username", () -> "sa");
+        r.add("spring.datasource.password", () -> "");
     }
 
     @Test
