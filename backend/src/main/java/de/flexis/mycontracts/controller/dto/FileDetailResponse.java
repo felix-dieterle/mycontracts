@@ -3,6 +3,7 @@ package de.flexis.mycontracts.controller.dto;
 import de.flexis.mycontracts.model.OcrFile;
 import de.flexis.mycontracts.model.StoredFile;
 import de.flexis.mycontracts.model.enums.OcrStatus;
+import de.flexis.mycontracts.model.enums.MarkerStatus;
 
 import java.time.Instant;
 
@@ -12,6 +13,7 @@ public record FileDetailResponse(
         String mime,
         Long size,
         String checksum,
+        MarkerStatus marker,
         Instant createdAt,
         OcrInfo ocr
 ) {
@@ -30,6 +32,7 @@ public record FileDetailResponse(
                 file.getMime(),
                 file.getSize(),
                 file.getChecksum(),
+                                file.getMarker(),
                 file.getCreatedAt(),
                 ocr
         );

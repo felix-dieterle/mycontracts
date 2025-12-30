@@ -12,4 +12,5 @@ public interface OcrFileRepository extends JpaRepository<OcrFile, Long> {
     List<OcrFile> findByStatus(OcrStatus status);
     java.util.Optional<OcrFile> findByPath(String path);
     java.util.Optional<OcrFile> findByMatchedFileId(Long matchedFileId);
+    java.util.List<OcrFile> findByMatchedFileIdIn(java.util.List<Long> matchedFileIds);
 }

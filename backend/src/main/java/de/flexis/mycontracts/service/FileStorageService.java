@@ -4,7 +4,10 @@ import de.flexis.mycontracts.model.StoredFile;
 import de.flexis.mycontracts.repository.StoredFileRepository;
 import de.flexis.mycontracts.repository.OcrFileRepository;
 import de.flexis.mycontracts.model.OcrFile;
+import de.flexis.mycontracts.model.enums.MarkerStatus;
 import java.util.Optional;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -79,8 +82,28 @@ public class FileStorageService {
         return ocrFileRepository.findByMatchedFileId(fileId);
     }
 
+    public Map<Long, OcrFile> findOcrForFileIds(java.util.List<Long> ids) {
+        if (ids.isEmpty()) return java.util.Collections.emptyMap();
+        return ocrFileRepository.findByMatchedFileIdIn(ids).stream()
+                .filter(of -> of.getMatchedFile() != null)
+                .collect(Collectors.toMap(of -> of.getMatchedFile().getId(), of -> of));
+    }
+
     public java.util.List<StoredFile> list() {
         return storedFileRepository.findAll();
+    }
+
+    public StoredFile updateMarker(Long id, String markerValue) {
+        StoredFile file = storedFileRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("File not found"));
+        MarkerStatus marker;
+        try {
+            marker = markerValue != null ? MarkerStatus.valueOf(markerValue.toUpperCase()) : MarkerStatus.NEUTRAL;
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid marker");
+        }
+        file.setMarker(marker);
+        return storedFileRepository.save(file);
     }
 
     private String checksum(Path file) throws IOException {

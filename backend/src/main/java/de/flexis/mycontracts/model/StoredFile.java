@@ -2,6 +2,7 @@ package de.flexis.mycontracts.model;
 
 import jakarta.persistence.*;
 import java.time.Instant;
+import de.flexis.mycontracts.model.enums.MarkerStatus;
 
 @Entity
 @Table(name = "files")
@@ -19,6 +20,9 @@ public class StoredFile {
     private String mime;
     private Long size;
     private String checksum;
+
+    @Enumerated(EnumType.STRING)
+    private MarkerStatus marker = MarkerStatus.NEUTRAL;
 
     @ManyToOne
     @JoinColumn(name = "contract_id")
@@ -75,6 +79,14 @@ public class StoredFile {
 
     public void setChecksum(String checksum) {
         this.checksum = checksum;
+    }
+
+    public MarkerStatus getMarker() {
+        return marker;
+    }
+
+    public void setMarker(MarkerStatus marker) {
+        this.marker = marker;
     }
 
     public Contract getContract() {

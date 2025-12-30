@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import de.flexis.mycontracts.controller.dto.FileDetailResponse;
 import de.flexis.mycontracts.controller.dto.FileListItemResponse;
+import de.flexis.mycontracts.controller.dto.UpdateMarkerRequest;
+import de.flexis.mycontracts.model.OcrFile;
 
 import java.net.MalformedURLException;
 import java.nio.file.Path;
@@ -37,7 +39,11 @@ public class FileController {
 
     @GetMapping
     public java.util.List<FileListItemResponse> list() {
-        return storageService.list().stream().map(FileListItemResponse::from).toList();
+        var files = storageService.list();
+        var ocrByFile = storageService.findOcrForFileIds(files.stream().map(StoredFile::getId).toList());
+        return files.stream()
+                .map(f -> FileListItemResponse.from(f, ocrByFile.get(f.getId())))
+                .toList();
     }
 
     @GetMapping("/{id}")
@@ -48,6 +54,16 @@ public class FileController {
             return ResponseEntity.ok(FileDetailResponse.from(file, ocr));
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PatchMapping("/{id}/marker")
+    public ResponseEntity<StoredFile> updateMarker(@PathVariable Long id, @RequestBody UpdateMarkerRequest request) {
+        try {
+            StoredFile updated = storageService.updateMarker(id, request.marker());
+            return ResponseEntity.ok(updated);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().build();
         }
     }
 
