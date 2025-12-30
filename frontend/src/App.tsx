@@ -26,6 +26,9 @@ type FileDetail = FileSummary & {
   note?: string | null
 }
 
+type NeedsAttention = 'ALL' | 'NEEDS_ATTENTION' | MarkerValue
+type MarkerValue = 'NEUTRAL' | 'GOOD' | 'REVIEW' | 'URGENT'
+
 const apiBase = import.meta.env.VITE_API_URL || ''
 
 export default function App() {
@@ -52,7 +55,7 @@ function FilesShell() {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const markerOptions = ['NEUTRAL', 'GOOD', 'REVIEW', 'URGENT']
-  const [markerFilter, setMarkerFilter] = useState<string>('ALL')
+  const [markerFilter, setMarkerFilter] = useState<NeedsAttention>('ALL')
   const [ocrFilter, setOcrFilter] = useState<string>('ALL')
   const [noteDraft, setNoteDraft] = useState<string>('')
   const [savingNote, setSavingNote] = useState(false)
@@ -216,8 +219,9 @@ function FilesShell() {
           </div>
           <div style={styles.filterRow}>
             <label style={styles.label}>Marker
-              <select value={markerFilter} onChange={e => setMarkerFilter(e.target.value)} style={styles.select}>
+              <select value={markerFilter} onChange={e => setMarkerFilter(e.target.value as NeedsAttention)} style={styles.select}>
                 <option value="ALL">Alle</option>
+                <option value="NEEDS_ATTENTION">⚠️ Needs Attention</option>
                 {markerOptions.map(m => <option key={m} value={m}>{m}</option>)}
               </select>
             </label>
@@ -248,6 +252,7 @@ function FilesShell() {
                   <span style={styles.listMeta}>{formatBytes(f.size)} · {formatDate(f.createdAt)}</span>
                   {f.marker && <span style={{ ...styles.badge, ...markerBadgeStyle(f.marker) }}>{f.marker}</span>}
                   {f.ocrStatus && <span style={{ ...styles.badge, ...ocrBadgeStyle(f.ocrStatus) }}>OCR {f.ocrStatus}</span>}
+                  {detail?.id === f.id && detail.note && <span style={{ ...styles.badge, background: '#f3e8ff', color: '#6b21a8', borderColor: '#e9d5ff' }}>📝 Note</span>}
                 </div>
               </li>
             ))}
@@ -340,9 +345,15 @@ function formatDate(iso?: string) {
   return d.toLocaleString()
 }
 
-function getFiltered(files: FileSummary[], marker: string, ocr: string) {
+function getFiltered(files: FileSummary[], marker: NeedsAttention, ocr: string) {
   return files.filter(f => {
-    const markerOk = marker === 'ALL' || (f.marker || 'NEUTRAL') === marker
+    let markerOk: boolean
+    if (marker === 'NEEDS_ATTENTION') {
+      const m = f.marker || 'NEUTRAL'
+      markerOk = m === 'REVIEW' || m === 'URGENT'
+    } else {
+      markerOk = marker === 'ALL' || (f.marker || 'NEUTRAL') === marker
+    }
     const ocrValue = f.ocrStatus || 'NONE'
     const ocrOk = ocr === 'ALL' || ocrValue === ocr
     return markerOk && ocrOk
