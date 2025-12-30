@@ -56,6 +56,8 @@ Hinweise: Actuator und Micrometer sind im Backend aktiviert; kein zusätzlicher 
 ## Wichtige Endpunkte (MVP)
 
 - `GET /api/health` – Health Check
+- `GET /api/files` – Liste der hochgeladenen Dateien (Metadaten)
+- `GET /api/files/{id}` – Detail inkl. OCR-Status/Raw JSON (falls vorhanden)
 - `POST /api/files/upload` – Datei Upload (multipart/form-data, Feld `file`)
 - `GET /api/files/{id}/download` – Datei herunterladen
 - `POST /api/ocr/import` – OCR JSON importieren (body: JSON)

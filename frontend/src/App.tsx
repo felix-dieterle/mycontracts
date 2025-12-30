@@ -1,22 +1,253 @@
-import React, {useEffect, useState} from 'react'
+import React, { useEffect, useState } from 'react'
+
+type FileSummary = {
+  id: number
+  filename: string
+  mime?: string
+  size?: number
+  checksum?: string
+  createdAt?: string
+}
+
+type OcrInfo = {
+  id: number
+  status: string
+  createdAt?: string
+  processedAt?: string
+  retryCount?: number
+  rawJson?: string
+}
+
+type FileDetail = FileSummary & {
+  ocr?: OcrInfo | null
+}
 
 const apiBase = import.meta.env.VITE_API_URL || ''
 
-export default function App(){
-  const [status, setStatus] = useState<string>('loading')
+export default function App() {
+  const [health, setHealth] = useState<'loading' | 'ok' | 'offline'>('loading')
+  const [files, setFiles] = useState<FileSummary[]>([])
+  const [listState, setListState] = useState<'idle' | 'loading' | 'error'>('idle')
+  const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [detail, setDetail] = useState<FileDetail | null>(null)
+  const [detailState, setDetailState] = useState<'idle' | 'loading' | 'error'>('idle')
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  useEffect(()=>{
+  useEffect(() => {
     fetch(apiBase + '/api/health')
-      .then(r=>r.json())
-      .then(j=>setStatus(j.status))
-      .catch(_=>setStatus('offline'))
-  },[])
+      .then(r => r.json())
+      .then(j => setHealth(j.status === 'UP' ? 'ok' : 'offline'))
+      .catch(() => setHealth('offline'))
+  }, [])
+
+  useEffect(() => {
+    refreshList()
+  }, [])
+
+  useEffect(() => {
+    if (selectedId != null) {
+      loadDetail(selectedId)
+    } else if (files.length > 0) {
+      setSelectedId(files[0].id)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId, files])
+
+  async function refreshList() {
+    setListState('loading')
+    setError(null)
+    try {
+      const res = await fetch(apiBase + '/api/files')
+      if (!res.ok) throw new Error('List failed')
+      const data: FileSummary[] = await res.json()
+      setFiles(data)
+      if (data.length && selectedId == null) {
+        setSelectedId(data[0].id)
+      }
+      setListState('idle')
+    } catch (e) {
+      setListState('error')
+      setError((e as Error).message)
+    }
+  }
+
+  async function loadDetail(id: number) {
+    setDetailState('loading')
+    setError(null)
+    try {
+      const res = await fetch(apiBase + `/api/files/${id}`)
+      if (!res.ok) throw new Error('Detail failed')
+      const data: FileDetail = await res.json()
+      setDetail(data)
+      setDetailState('idle')
+    } catch (e) {
+      setDetailState('error')
+      setError((e as Error).message)
+    }
+  }
+
+  async function handleUpload(ev: React.FormEvent<HTMLFormElement>) {
+    ev.preventDefault()
+    const input = ev.currentTarget.elements.namedItem('file') as HTMLInputElement
+    if (!input?.files || !input.files[0]) return
+    const file = input.files[0]
+    const body = new FormData()
+    body.append('file', file)
+    setUploading(true)
+    setError(null)
+    try {
+      const res = await fetch(apiBase + '/api/files/upload', { method: 'POST', body })
+      if (!res.ok) throw new Error('Upload failed')
+      const created: FileSummary = await res.json()
+      await refreshList()
+      setSelectedId(created.id)
+      input.value = ''
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const selectedFile = files.find(f => f.id === selectedId) || null
 
   return (
-    <div style={{fontFamily:'sans-serif',padding:20}}>
-      <h1>mycontracts</h1>
-      <p>Backend status: <strong>{status}</strong></p>
-      <p>Upload, Watcher und Extraction folgen im nächsten Schritt.</p>
+    <div style={styles.page}>
+      <header style={styles.header}>
+        <div>
+          <h1 style={styles.title}>mycontracts</h1>
+          <p style={styles.muted}>Upload, Liste und Detail inkl. OCR</p>
+        </div>
+        <span style={{ ...styles.status, backgroundColor: health === 'ok' ? '#c5f6c5' : '#ffe3e3' }}>
+          Backend: {health}
+        </span>
+      </header>
+
+      <section style={styles.card}>
+        <form onSubmit={handleUpload} style={styles.uploadRow}>
+          <label style={styles.label}>
+            Datei hochladen
+            <input type="file" name="file" required style={styles.fileInput} />
+          </label>
+          <button type="submit" disabled={uploading} style={styles.primaryButton}>
+            {uploading ? 'Lade...' : 'Upload'}
+          </button>
+        </form>
+        {error && <div style={styles.error}>{error}</div>}
+      </section>
+
+      <div style={styles.grid}>
+        <section style={styles.card}>
+          <div style={styles.sectionHeader}>
+            <h2 style={styles.h2}>Dateien</h2>
+            {listState === 'loading' && <span style={styles.badge}>lädt...</span>}
+            {listState === 'error' && <span style={{ ...styles.badge, background: '#ffe3e3', color: '#b00020' }}>Fehler</span>}
+          </div>
+          {files.length === 0 && <p style={styles.muted}>Noch keine Dateien.</p>}
+          <ul style={styles.list}>
+            {files.map(f => (
+              <li
+                key={f.id}
+                style={{
+                  ...styles.listItem,
+                  borderColor: selectedId === f.id ? '#2d6cdf' : '#e5e7eb',
+                  background: selectedId === f.id ? '#eef4ff' : '#fff'
+                }}
+                onClick={() => setSelectedId(f.id)}
+              >
+                <div style={styles.listTitle}>{f.filename}</div>
+                <div style={styles.listMeta}>{formatBytes(f.size)} · {formatDate(f.createdAt)}</div>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section style={styles.card}>
+          <div style={styles.sectionHeader}>
+            <h2 style={styles.h2}>Detail</h2>
+            {detailState === 'loading' && <span style={styles.badge}>lädt...</span>}
+            {detailState === 'error' && <span style={{ ...styles.badge, background: '#ffe3e3', color: '#b00020' }}>Fehler</span>}
+          </div>
+          {!selectedFile && <p style={styles.muted}>Wähle eine Datei aus.</p>}
+          {selectedFile && detail && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>
+                <div style={styles.label}>Datei</div>
+                <div>{detail.filename}</div>
+                <div style={styles.listMeta}>{formatBytes(detail.size)} · {detail.mime || 'unbekannt'} · {formatDate(detail.createdAt)}</div>
+              </div>
+              <div>
+                <div style={styles.label}>Checksumme</div>
+                <div style={styles.code}>{detail.checksum || 'n/a'}</div>
+              </div>
+              <div>
+                <a href={`${apiBase}/api/files/${detail.id}/download`} style={styles.link}>Download</a>
+              </div>
+              <div>
+                <div style={styles.label}>OCR</div>
+                {!detail.ocr && <div style={styles.muted}>Keine OCR verknüpft.</div>}
+                {detail.ocr && (
+                  <div style={styles.ocrBox}>
+                    <div style={styles.listMeta}>Status: {detail.ocr.status} · Versuche: {detail.ocr.retryCount ?? 0}</div>
+                    <pre style={styles.pre}>{prettyJson(detail.ocr.rawJson)}</pre>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   )
+}
+
+function formatBytes(size?: number) {
+  if (size == null) return 'n/a'
+  if (size < 1024) return `${size} B`
+  const kb = size / 1024
+  if (kb < 1024) return `${kb.toFixed(1)} KB`
+  return `${(kb / 1024).toFixed(1)} MB`
+}
+
+function formatDate(iso?: string) {
+  if (!iso) return 'n/a'
+  const d = new Date(iso)
+  return d.toLocaleString()
+}
+
+function prettyJson(raw?: string) {
+  if (!raw) return '–'
+  try {
+    const parsed = JSON.parse(raw)
+    return JSON.stringify(parsed, null, 2)
+  } catch {
+    return raw
+  }
+}
+
+const styles: Record<string, React.CSSProperties> = {
+  page: { fontFamily: '"Inter", system-ui, -apple-system, sans-serif', background: '#f7f9fc', minHeight: '100vh', padding: '24px', color: '#0f172a' },
+  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  title: { margin: 0, fontSize: 24, color: '#0f172a' },
+  muted: { color: '#6b7280', margin: 0 },
+  status: { padding: '6px 10px', borderRadius: 8, fontSize: 13, border: '1px solid #e5e7eb' },
+  card: { background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 16, boxShadow: '0 4px 18px rgba(15,23,42,0.04)', display: 'flex', flexDirection: 'column', gap: 8 },
+  uploadRow: { display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' },
+  label: { fontSize: 13, fontWeight: 600, color: '#475569' },
+  fileInput: { marginTop: 6 },
+  primaryButton: { background: '#2d6cdf', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: 10, cursor: 'pointer' },
+  error: { background: '#ffe3e3', color: '#b00020', padding: '8px 12px', borderRadius: 8, border: '1px solid #f5c2c7' },
+  grid: { display: 'grid', gridTemplateColumns: '320px 1fr', gap: 16, alignItems: 'start', marginTop: 16 },
+  sectionHeader: { display: 'flex', alignItems: 'center', gap: 8 },
+  h2: { margin: 0, fontSize: 18 },
+  badge: { fontSize: 12, padding: '4px 8px', borderRadius: 8, background: '#eef2ff', color: '#3730a3' },
+  list: { listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 },
+  listItem: { border: '1px solid #e5e7eb', borderRadius: 10, padding: 10, cursor: 'pointer' },
+  listTitle: { fontWeight: 600, color: '#0f172a' },
+  listMeta: { fontSize: 12, color: '#6b7280' },
+  link: { color: '#2d6cdf', textDecoration: 'none', fontWeight: 600 },
+  pre: { background: '#0f172a', color: '#e2e8f0', padding: 12, borderRadius: 8, maxHeight: 260, overflow: 'auto', fontSize: 12 },
+  code: { fontFamily: 'monospace', fontSize: 12, color: '#0f172a', background: '#f1f5f9', padding: '4px 6px', borderRadius: 6 },
+  ocrBox: { display: 'flex', flexDirection: 'column', gap: 6 },
 }
