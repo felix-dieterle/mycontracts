@@ -2,7 +2,11 @@ package de.flexis.mycontracts.model;
 
 import jakarta.persistence.*;
 import java.time.Instant;
-import de.flexis.mycontracts.model.enums.MarkerStatus;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import java.util.Set;
+import java.util.HashSet;
 
 @Entity
 @Table(name = "files")
@@ -21,8 +25,10 @@ public class StoredFile {
     private Long size;
     private String checksum;
 
-    @Enumerated(EnumType.STRING)
-    private MarkerStatus marker = MarkerStatus.NEUTRAL;
+    @Lob
+    private String markersJson; // JSON array: ["URGENT","REVIEW",...]
+
+    private Instant dueDate;
 
     @Lob
     private String note;
@@ -84,12 +90,20 @@ public class StoredFile {
         this.checksum = checksum;
     }
 
-    public MarkerStatus getMarker() {
-        return marker;
+    public String getMarkersJson() {
+        return markersJson;
     }
 
-    public void setMarker(MarkerStatus marker) {
-        this.marker = marker;
+    public void setMarkersJson(String markersJson) {
+        this.markersJson = markersJson;
+    }
+
+    public Instant getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(Instant dueDate) {
+        this.dueDate = dueDate;
     }
 
     public String getNote() {

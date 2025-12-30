@@ -12,6 +12,8 @@ import org.springframework.web.multipart.MultipartFile;
 import de.flexis.mycontracts.controller.dto.FileDetailResponse;
 import de.flexis.mycontracts.controller.dto.FileListItemResponse;
 import de.flexis.mycontracts.controller.dto.UpdateMarkerRequest;
+import de.flexis.mycontracts.controller.dto.UpdateMarkersRequest;
+import de.flexis.mycontracts.controller.dto.UpdateDueDateRequest;
 import de.flexis.mycontracts.controller.dto.UpdateNoteRequest;
 import de.flexis.mycontracts.model.OcrFile;
 
@@ -62,6 +64,26 @@ public class FileController {
     public ResponseEntity<StoredFile> updateMarker(@PathVariable Long id, @RequestBody UpdateMarkerRequest request) {
         try {
             StoredFile updated = storageService.updateMarker(id, request.marker());
+            return ResponseEntity.ok(updated);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PatchMapping("/{id}/markers")
+    public ResponseEntity<StoredFile> updateMarkers(@PathVariable Long id, @RequestBody UpdateMarkersRequest request) {
+        try {
+            StoredFile updated = storageService.updateMarkers(id, request.markers());
+            return ResponseEntity.ok(updated);
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PatchMapping("/{id}/due-date")
+    public ResponseEntity<StoredFile> updateDueDate(@PathVariable Long id, @RequestBody UpdateDueDateRequest request) {
+        try {
+            StoredFile updated = storageService.updateDueDate(id, request.dueDate());
             return ResponseEntity.ok(updated);
         } catch (IllegalArgumentException ex) {
             return ResponseEntity.badRequest().build();

@@ -8,7 +8,8 @@ type FileSummary = {
   size?: number
   checksum?: string
   createdAt?: string
-  marker?: string
+  markers?: string[]
+  dueDate?: string | null
   ocrStatus?: string | null
 }
 
@@ -26,8 +27,8 @@ type FileDetail = FileSummary & {
   note?: string | null
 }
 
-type NeedsAttention = 'ALL' | 'NEEDS_ATTENTION' | MarkerValue
-type MarkerValue = 'NEUTRAL' | 'GOOD' | 'REVIEW' | 'URGENT'
+type NeedsAttention = 'ALL' | 'NEEDS_ATTENTION'
+const MARKER_OPTIONS = ['URGENT', 'REVIEW', 'MISSING_INFO', 'INCOMPLETE_OCR', 'FOLLOW_UP']
 
 const apiBase = import.meta.env.VITE_API_URL || ''
 
@@ -54,11 +55,14 @@ function FilesShell() {
   const [detailState, setDetailState] = useState<'idle' | 'loading' | 'error'>('idle')
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const markerOptions = ['NEUTRAL', 'GOOD', 'REVIEW', 'URGENT']
   const [markerFilter, setMarkerFilter] = useState<NeedsAttention>('ALL')
   const [ocrFilter, setOcrFilter] = useState<string>('ALL')
   const [noteDraft, setNoteDraft] = useState<string>('')
   const [savingNote, setSavingNote] = useState(false)
+  const [dueDateDraft, setDueDateDraft] = useState<string>('')
+  const [savingDueDate, setSavingDueDate] = useState(false)
+  const [selectedMarkersForDetail, setSelectedMarkersForDetail] = useState<string[]>([])
+  const [savingMarkers, setSavingMarkers] = useState(false)
 
   useEffect(() => {
     fetch(apiBase + '/api/health')
@@ -117,6 +121,8 @@ function FilesShell() {
       const data: FileDetail = await res.json()
       setDetail(data)
       setNoteDraft(data.note || '')
+      setSelectedMarkersForDetail(data.markers || [])
+      setDueDateDraft(data.dueDate ? new Date(data.dueDate).toISOString().split('T')[0] : '')
       setDetailState('idle')
     } catch (e) {
       setDetailState('error')
@@ -124,19 +130,42 @@ function FilesShell() {
     }
   }
 
-  async function updateMarker(marker: string) {
+  async function saveMarkers() {
     if (!selectedId) return
+    setSavingMarkers(true)
     setError(null)
     try {
-      const res = await fetch(apiBase + `/api/files/${selectedId}/marker`, {
+      const res = await fetch(apiBase + `/api/files/${selectedId}/markers`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ marker })
+        body: JSON.stringify({ markers: selectedMarkersForDetail })
       })
-      if (!res.ok) throw new Error('Marker update failed')
+      if (!res.ok) throw new Error('Markers update failed')
       await Promise.all([refreshList(), loadDetail(selectedId)])
     } catch (e) {
       setError((e as Error).message)
+    } finally {
+      setSavingMarkers(false)
+    }
+  }
+
+  async function saveDueDate() {
+    if (!selectedId) return
+    setSavingDueDate(true)
+    setError(null)
+    try {
+      const dueDate = dueDateDraft ? new Date(dueDateDraft + 'T00:00:00Z').toISOString() : null
+      const res = await fetch(apiBase + `/api/files/${selectedId}/due-date`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dueDate })
+      })
+      if (!res.ok) throw new Error('Due date update failed')
+      await Promise.all([refreshList(), loadDetail(selectedId)])
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setSavingDueDate(false)
     }
   }
 
@@ -250,7 +279,8 @@ function FilesShell() {
                 <div style={styles.listTitle}>{f.filename}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                   <span style={styles.listMeta}>{formatBytes(f.size)} · {formatDate(f.createdAt)}</span>
-                  {f.marker && <span style={{ ...styles.badge, ...markerBadgeStyle(f.marker) }}>{f.marker}</span>}
+                  {(f.markers || []).map(m => <span key={m} style={{ ...styles.badge, ...markerBadgeStyle(m) }}>{m}</span>)}
+                  {f.dueDate && <span style={{ ...styles.badge, background: '#cffafe', color: '#164e63', borderColor: '#a5f3fc' }}>📅 {formatDate(f.dueDate)}</span>}
                   {f.ocrStatus && <span style={{ ...styles.badge, ...ocrBadgeStyle(f.ocrStatus) }}>OCR {f.ocrStatus}</span>}
                   {detail?.id === f.id && detail.note && <span style={{ ...styles.badge, background: '#f3e8ff', color: '#6b21a8', borderColor: '#e9d5ff' }}>📝 Note</span>}
                 </div>
@@ -258,9 +288,7 @@ function FilesShell() {
             ))}
           </ul>
           <div style={styles.legendRow}>
-            <span style={{ ...styles.badge, ...markerBadgeStyle('GOOD') }}>GOOD</span>
-            <span style={{ ...styles.badge, ...markerBadgeStyle('REVIEW') }}>REVIEW</span>
-            <span style={{ ...styles.badge, ...markerBadgeStyle('URGENT') }}>URGENT</span>
+            {MARKER_OPTIONS.map(m => <span key={m} style={{ ...styles.badge, ...markerBadgeStyle(m) }}>{m}</span>)}
             <span style={{ ...styles.badge, ...ocrBadgeStyle('MATCHED') }}>OCR MATCHED</span>
             <span style={{ ...styles.badge, ...ocrBadgeStyle('PENDING') }}>OCR PENDING</span>
             <span style={{ ...styles.badge, ...ocrBadgeStyle('FAILED') }}>OCR FAILED</span>
@@ -286,16 +314,40 @@ function FilesShell() {
                 <div style={styles.code}>{detail.checksum || 'n/a'}</div>
               </div>
               <div>
-                <div style={styles.label}>Marker</div>
-                <select
-                  value={detail.marker || 'NEUTRAL'}
-                  onChange={e => updateMarker(e.target.value)}
-                  style={styles.select}
-                >
-                  {markerOptions.map(m => (
-                    <option key={m} value={m}>{m}</option>
+                <div style={styles.label}>Marker (Multiple)</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {MARKER_OPTIONS.map(m => (
+                    <label key={m} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedMarkersForDetail.includes(m)}
+                        onChange={e => {
+                          if (e.target.checked) {
+                            setSelectedMarkersForDetail([...selectedMarkersForDetail, m])
+                          } else {
+                            setSelectedMarkersForDetail(selectedMarkersForDetail.filter(x => x !== m))
+                          }
+                        }}
+                      />
+                      <span style={{ ...styles.badge, ...markerBadgeStyle(m) }}>{m}</span>
+                    </label>
                   ))}
-                </select>
+                </div>
+                <button style={styles.secondaryButton} onClick={saveMarkers} disabled={savingMarkers}>
+                  {savingMarkers ? 'Speichere...' : 'Marker speichern'}
+                </button>
+              </div>
+              <div>
+                <div style={styles.label}>Due Date (Fälligkeitsdatum)</div>
+                <input
+                  type="date"
+                  value={dueDateDraft}
+                  onChange={e => setDueDateDraft(e.target.value)}
+                  style={styles.select}
+                />
+                <button style={styles.secondaryButton} onClick={saveDueDate} disabled={savingDueDate}>
+                  {savingDueDate ? 'Speichere...' : 'Fälligkeitsdatum speichern'}
+                </button>
               </div>
               <div>
                 <div style={styles.label}>Notiz</div>
@@ -345,14 +397,14 @@ function formatDate(iso?: string) {
   return d.toLocaleString()
 }
 
-function getFiltered(files: FileSummary[], marker: NeedsAttention, ocr: string) {
+function getFiltered(files: FileSummary[], filter: NeedsAttention, ocr: string) {
   return files.filter(f => {
     let markerOk: boolean
-    if (marker === 'NEEDS_ATTENTION') {
-      const m = f.marker || 'NEUTRAL'
-      markerOk = m === 'REVIEW' || m === 'URGENT'
+    if (filter === 'NEEDS_ATTENTION') {
+      const markers = f.markers || []
+      markerOk = markers.some(m => m === 'URGENT' || m === 'REVIEW' || m === 'MISSING_INFO') || (f.dueDate && new Date(f.dueDate) < new Date())
     } else {
-      markerOk = marker === 'ALL' || (f.marker || 'NEUTRAL') === marker
+      markerOk = filter === 'ALL'
     }
     const ocrValue = f.ocrStatus || 'NONE'
     const ocrOk = ocr === 'ALL' || ocrValue === ocr
@@ -404,12 +456,16 @@ const styles: Record<string, React.CSSProperties> = {
 function markerBadgeStyle(marker: string): React.CSSProperties {
   const base = { border: '1px solid transparent' }
   switch (marker) {
-    case 'GOOD':
-      return { ...base, background: '#dcfce7', color: '#166534', borderColor: '#bbf7d0' }
-    case 'REVIEW':
-      return { ...base, background: '#fef9c3', color: '#854d0e', borderColor: '#fde68a' }
     case 'URGENT':
       return { ...base, background: '#fee2e2', color: '#b91c1c', borderColor: '#fecaca' }
+    case 'REVIEW':
+      return { ...base, background: '#fef9c3', color: '#854d0e', borderColor: '#fde68a' }
+    case 'MISSING_INFO':
+      return { ...base, background: '#e0d5ff', color: '#6d28d9', borderColor: '#d8b4fe' }
+    case 'INCOMPLETE_OCR':
+      return { ...base, background: '#fce7f3', color: '#831843', borderColor: '#fbcfe8' }
+    case 'FOLLOW_UP':
+      return { ...base, background: '#dcfce7', color: '#166534', borderColor: '#bbf7d0' }
     default:
       return { ...base, background: '#e2e8f0', color: '#475569', borderColor: '#cbd5e1' }
   }

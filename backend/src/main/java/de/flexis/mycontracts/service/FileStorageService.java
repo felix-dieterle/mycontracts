@@ -4,10 +4,11 @@ import de.flexis.mycontracts.model.StoredFile;
 import de.flexis.mycontracts.repository.StoredFileRepository;
 import de.flexis.mycontracts.repository.OcrFileRepository;
 import de.flexis.mycontracts.model.OcrFile;
-import de.flexis.mycontracts.model.enums.MarkerStatus;
 import java.util.Optional;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.time.Instant;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -96,13 +97,27 @@ public class FileStorageService {
     public StoredFile updateMarker(Long id, String markerValue) {
         StoredFile file = storedFileRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("File not found"));
-        MarkerStatus marker;
-        try {
-            marker = markerValue != null ? MarkerStatus.valueOf(markerValue.toUpperCase()) : MarkerStatus.NEUTRAL;
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid marker");
-        }
-        file.setMarker(marker);
+        // Legacy support: single marker value converted to markers JSON array
+        String markersJson = markerValue != null && !markerValue.isBlank() ? markerValue : "";
+        file.setMarkersJson(markersJson);
+        return storedFileRepository.save(file);
+    }
+
+    public StoredFile updateMarkers(Long id, List<String> markers) {
+        StoredFile file = storedFileRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("File not found"));
+        // Join markers with comma (e.g. "URGENT,REVIEW,MISSING_INFO")
+        String markersJson = markers != null && !markers.isEmpty() 
+                ? String.join(",", markers) 
+                : "";
+        file.setMarkersJson(markersJson);
+        return storedFileRepository.save(file);
+    }
+
+    public StoredFile updateDueDate(Long id, Instant dueDate) {
+        StoredFile file = storedFileRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("File not found"));
+        file.setDueDate(dueDate);
         return storedFileRepository.save(file);
     }
 

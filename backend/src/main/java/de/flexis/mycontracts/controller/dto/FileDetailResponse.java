@@ -3,9 +3,9 @@ package de.flexis.mycontracts.controller.dto;
 import de.flexis.mycontracts.model.OcrFile;
 import de.flexis.mycontracts.model.StoredFile;
 import de.flexis.mycontracts.model.enums.OcrStatus;
-import de.flexis.mycontracts.model.enums.MarkerStatus;
-
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.List;
 
 public record FileDetailResponse(
         Long id,
@@ -13,12 +13,16 @@ public record FileDetailResponse(
         String mime,
         Long size,
         String checksum,
-        MarkerStatus marker,
-                String note,
+        List<String> markers,
+        Instant dueDate,
+        String note,
         Instant createdAt,
         OcrInfo ocr
 ) {
     public static FileDetailResponse from(StoredFile file, OcrFile ocrFile) {
+        List<String> markers = file.getMarkersJson() != null && !file.getMarkersJson().isBlank()
+                ? Arrays.asList(file.getMarkersJson().split(","))
+                : List.of();
         OcrInfo ocr = ocrFile == null ? null : new OcrInfo(
                 ocrFile.getId(),
                 ocrFile.getStatus(),
@@ -33,8 +37,9 @@ public record FileDetailResponse(
                 file.getMime(),
                 file.getSize(),
                 file.getChecksum(),
-                                file.getMarker(),
-                                file.getNote(),
+                markers,
+                file.getDueDate(),
+                file.getNote(),
                 file.getCreatedAt(),
                 ocr
         );
