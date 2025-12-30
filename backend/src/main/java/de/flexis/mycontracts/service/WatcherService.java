@@ -42,7 +42,7 @@ public class WatcherService {
 
     private boolean enabled = true;
 
-    public WatcherService(@Value("${WATCH_DIR:/data/incoming}") String watchDir,
+    public WatcherService(@Value("${WATCH_DIR:${user.dir}/data/incoming}") String watchDir,
                          StoredFileRepository storedFileRepository,
                          OcrFileRepository ocrFileRepository,
                          ObjectProvider<MeterRegistry> meterRegistryProvider) throws IOException {

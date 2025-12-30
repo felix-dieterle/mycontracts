@@ -31,7 +31,7 @@ public class FileStorageService {
     private final StoredFileRepository storedFileRepository;
     private final OcrFileRepository ocrFileRepository;
 
-    public FileStorageService(@Value("${FILE_STORAGE_PATH:/data/files}") String storagePath,
+    public FileStorageService(@Value("${FILE_STORAGE_PATH:${user.dir}/data/files}") String storagePath,
                               StoredFileRepository storedFileRepository,
                               OcrFileRepository ocrFileRepository) throws IOException {
         this.storagePath = Path.of(storagePath);

@@ -251,7 +251,7 @@ function FilesShell() {
               <select value={markerFilter} onChange={e => setMarkerFilter(e.target.value as NeedsAttention)} style={styles.select}>
                 <option value="ALL">Alle</option>
                 <option value="NEEDS_ATTENTION">⚠️ Needs Attention</option>
-                {markerOptions.map(m => <option key={m} value={m}>{m}</option>)}
+                {MARKER_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}
               </select>
             </label>
             <label style={styles.label}>OCR
