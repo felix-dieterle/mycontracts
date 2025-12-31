@@ -34,17 +34,27 @@ const MARKER_OPTIONS = ['URGENT', 'REVIEW', 'MISSING_INFO', 'INCOMPLETE_OCR', 'F
 const apiBase = import.meta.env.VITE_API_URL || (() => {
   const protocol = window.location.protocol
   const hostname = window.location.hostname
+  const port = window.location.port
   
   // In Codespaces, hostname looks like: username-abc123-5173.app.github.dev
-  // Replace 5173 with 8080 for backend
+  // Replace port in hostname with 8080 for backend
   if (hostname.includes('app.github.dev')) {
-    const backendHost = hostname.replace('-5173.', '-8080.')
+    // Handle both -5173. and -5174. etc.
+    const backendHost = hostname.replace(/-\d+\./, '-8080.')
     return `${protocol}//${backendHost}`
   }
   
   // For localhost dev (localhost:5173 → localhost:8080)
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return `${protocol}//${hostname}:8080`
+  }
+  
+  // Fallback: same host, port 8080
   return `${protocol}//${hostname}:8080`
 })()
+
+// Log the detected API URL for debugging
+console.log('[mycontracts] API Base URL:', apiBase)
 
 export default function App() {
   return (

@@ -1,5 +1,20 @@
 # mycontracts – Nutzungsanleitung
 
+> **Hinweis:** Diese Anleitung enthält Live-Screenshots der Benutzeroberfläche. Für detaillierte ASCII-Diagramme siehe [README.md](README.md).
+
+## Screenshots-Galerie
+
+### Übersicht
+![App-Übersicht](frontend/screenshots/01-app-loaded.png)
+
+### Dateiliste mit Markern und Due Dates
+![Dateiliste](frontend/screenshots/02-file-list.png)
+
+### Detail-Panel mit Bearbeitungsmöglichkeiten
+![Detail-Ansicht](frontend/screenshots/03-detail-panel.png)
+
+---
+
 ## Quick Start
 
 ### 1. Anwendung starten
@@ -69,6 +84,8 @@ curl -F "file=@License_Software_2025.pdf" \
    - Notiz (leer)
    - OCR Status (falls vorhanden)
 
+![Detail-Panel Screenshot](frontend/screenshots/03-detail-panel.png)
+
 ### Schritt 3: Marker setzen
 
 Das Lizenz-System ist unvollständig. Es gibt 2 Probleme:
@@ -83,6 +100,8 @@ Das Lizenz-System ist unvollständig. Es gibt 2 Probleme:
    - Alle anderen bleiben unchecked (☐)
 3. Button "Marker speichern" klicken
 4. Status: "Speichere..." → "Fertig"
+
+![Marker-Auswahl Screenshot](frontend/screenshots/04-markers.png)
 5. Datei in der Liste zeigt jetzt: `[MISSING_INFO] [INCOMPLETE_OCR]`
 
 **API (curl):**
@@ -103,6 +122,8 @@ Die Lizenz muss bis zum 15. Dezember 2025 aktualisiert sein.
 2. Button "Fälligkeitsdatum speichern" klicken
 3. Status: "Speichere..." → "Fertig"
 4. Datei in der Liste zeigt jetzt: `📅 15 Dec 2025`
+
+![Due Date Picker Screenshot](frontend/screenshots/05-due-date.png)
 
 **API (curl):**
 ```bash

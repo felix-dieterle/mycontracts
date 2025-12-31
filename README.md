@@ -19,6 +19,35 @@ Leichtgewichtige Vertragsverwaltung (MVP) mit OCR-Matching, Status-Markern und T
 
 ## Benutzeroberfläche
 
+### Live Screenshots
+
+#### App-Übersicht
+![App geladen](frontend/screenshots/01-app-loaded.png)
+*Hauptansicht nach dem Laden der Anwendung*
+
+#### Dateiliste mit Markern
+![Dateiliste](frontend/screenshots/02-file-list.png)
+*Dateiliste mit mehreren Markern und Fälligkeitsdaten*
+
+#### Detail-Panel
+![Detail-Panel](frontend/screenshots/03-detail-panel.png)
+*Detailansicht einer ausgewählten Datei*
+
+#### Marker-Auswahl
+![Marker-Checkboxen](frontend/screenshots/04-markers.png)
+*Mehrfachauswahl von Markern über Checkboxen*
+
+#### Fälligkeitsdatum setzen
+![Due Date Picker](frontend/screenshots/05-due-date.png)
+*Datepicker zur Einstellung von Fälligkeitsdaten*
+
+---
+
+### ASCII-Diagramme (Referenz)
+
+<details>
+<summary>Klicken um ASCII-Diagramme anzuzeigen</summary>
+
 ### Übersicht – Dateiliste und Filter
 
 ```
@@ -116,6 +145,10 @@ Leichtgewichtige Vertragsverwaltung (MVP) mit OCR-Matching, Status-Markern und T
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
+
+</details>
+
+---
 
 ## Marker-System
 
