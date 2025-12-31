@@ -1,4 +1,12 @@
-# mycontracts – Nutzungsanleitung
+# mycontracts – Nutzungsanleitung (Vertrags-Cockpit)
+
+## Fokus: Vertragsoptimierung & Zukunftsplanung
+
+Das Vertrags-Cockpit ist Ihr **strategisches Tool** zur:
+- **Optimierung** Ihrer Vertragslandschaft
+- **Planung** zukünftiger Handlungen und Fälligkeiten
+- **Identifikation** von Handlungsbedarfen und Risiken
+- **Automatisierung** wiederkehrender Aufgaben (OCR, Matching)
 
 ## Quick Start
 
@@ -17,13 +25,20 @@ cd frontend && npm install && npm run dev
 ```
 
 **URLs:**
-- Frontend: `http://localhost:5173`
+- Frontend: `http://localhost:5173` – **Optimierungs-Cockpit mit Dashboard**
 - Backend: `http://localhost:8080`
 - API Health: `http://localhost:8080/api/health`
 
+### Erste Schritte im Cockpit
+
+Nach dem Start sehen Sie das **Optimierungs-Cockpit**:
+1. **Dashboard-Übersicht** zeigt wichtige Kennzahlen (Handlungsbedarfe, Fälligkeiten, OCR-Status)
+2. **Optimierungsempfehlungen** listen konkrete Aktionen auf
+3. **Dateiliste** mit intelligenten Filtern für fokussiertes Arbeiten
+
 ---
 
-## Workflow-Beispiel: Lizenz-Vertrag verwalten
+## Workflow-Beispiel: Strategische Vertragsoptimierung
 
 ### Szenario
 Ein Software-Lizenz-Vertrag muss hochgeladen, markiert und überwacht werden.
