@@ -78,7 +78,7 @@ jobs:
       - name: Start backend in background
         working-directory: backend
         run: |
-          nohup mvn spring-boot:run -DskipTests > backend.log 2>&1 &
+          nohup mvn spring-boot:run -DskipTests > $GITHUB_WORKSPACE/backend/backend.log 2>&1 &
           # Wait for backend to be ready
           for i in {1..60}; do
             if curl -s http://localhost:8080/api/health > /dev/null 2>&1; then
@@ -90,7 +90,7 @@ jobs:
           done
           if ! curl -s http://localhost:8080/api/health > /dev/null 2>&1; then
             echo "Backend failed to start"
-            cat backend.log
+            cat $GITHUB_WORKSPACE/backend/backend.log
             exit 1
           fi
 
@@ -105,6 +105,7 @@ jobs:
           name: playwright-report
           path: frontend/test-results/
           retention-days: 30
+          if-no-files-found: ignore
 
       - name: Upload screenshots
         if: always()
@@ -113,3 +114,4 @@ jobs:
           name: screenshots
           path: frontend/screenshots/
           retention-days: 30
+          if-no-files-found: ignore
