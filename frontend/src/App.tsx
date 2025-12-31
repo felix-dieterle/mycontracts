@@ -227,6 +227,17 @@ function FilesShell() {
 
   const selectedFile = selectedId ? files.find(f => f.id === selectedId) || null : null
   const visibleFiles = getFiltered(files, markerFilter, ocrFilter)
+  
+  // Compute dashboard metrics once
+  const needsAttention = files.filter(f => {
+    const markers = f.markers || []
+    return markers.includes('URGENT') || markers.includes('REVIEW') || markers.includes('MISSING_INFO') || (f.dueDate && new Date(f.dueDate) < new Date())
+  }).length
+  const upcomingDueDates = files.filter(f => f.dueDate && new Date(f.dueDate) < new Date(Date.now() + 30*24*60*60*1000)).length
+  const ocrIssues = files.filter(f => f.ocrStatus === 'PENDING' || f.ocrStatus === 'FAILED').length
+  const overdue = files.filter(f => f.dueDate && new Date(f.dueDate) < new Date()).length
+  const missingInfo = files.filter(f => (f.markers || []).includes('MISSING_INFO')).length
+  const needsCategorization = files.filter(f => !(f.markers || []).length && !f.dueDate && !f.note).length
 
   return (
     <div style={styles.page}>
@@ -258,20 +269,17 @@ function FilesShell() {
         <div style={styles.dashboardGrid}>
           <div style={styles.insightCard}>
             <div style={styles.insightTitle}>⚠️ Handlungsbedarf</div>
-            <div style={styles.insightValue}>{files.filter(f => {
-              const markers = f.markers || []
-              return markers.includes('URGENT') || markers.includes('REVIEW') || markers.includes('MISSING_INFO') || (f.dueDate && new Date(f.dueDate) < new Date())
-            }).length}</div>
+            <div style={styles.insightValue}>{needsAttention}</div>
             <div style={styles.insightLabel}>Verträge benötigen Aufmerksamkeit</div>
           </div>
           <div style={styles.insightCard}>
             <div style={styles.insightTitle}>📅 Fälligkeiten</div>
-            <div style={styles.insightValue}>{files.filter(f => f.dueDate && new Date(f.dueDate) < new Date(Date.now() + 30*24*60*60*1000)).length}</div>
+            <div style={styles.insightValue}>{upcomingDueDates}</div>
             <div style={styles.insightLabel}>In den nächsten 30 Tagen</div>
           </div>
           <div style={styles.insightCard}>
             <div style={styles.insightTitle}>🔍 OCR-Status</div>
-            <div style={styles.insightValue}>{files.filter(f => f.ocrStatus === 'PENDING' || f.ocrStatus === 'FAILED').length}</div>
+            <div style={styles.insightValue}>{ocrIssues}</div>
             <div style={styles.insightLabel}>Benötigen OCR-Überprüfung</div>
           </div>
           <div style={styles.insightCard}>
@@ -283,20 +291,19 @@ function FilesShell() {
         <div style={styles.optimizationTips}>
           <div style={styles.tipsTitle}>💡 Optimierungsempfehlungen</div>
           <ul style={styles.tipsList}>
-            {files.filter(f => f.dueDate && new Date(f.dueDate) < new Date()).length > 0 && (
-              <li style={styles.tipItem}>🔴 {files.filter(f => f.dueDate && new Date(f.dueDate) < new Date()).length} überfällige Verträge prüfen</li>
+            {overdue > 0 && (
+              <li style={styles.tipItem}>🔴 {overdue} überfällige Verträge prüfen</li>
             )}
-            {files.filter(f => (f.markers || []).includes('MISSING_INFO')).length > 0 && (
-              <li style={styles.tipItem}>🟣 {files.filter(f => (f.markers || []).includes('MISSING_INFO')).length} Verträge mit unvollständigen Informationen vervollständigen</li>
+            {missingInfo > 0 && (
+              <li style={styles.tipItem}>🟣 {missingInfo} Verträge mit unvollständigen Informationen vervollständigen</li>
             )}
-            {files.filter(f => f.ocrStatus === 'FAILED' || f.ocrStatus === 'PENDING').length > 0 && (
-              <li style={styles.tipItem}>🔍 {files.filter(f => f.ocrStatus === 'FAILED' || f.ocrStatus === 'PENDING').length} OCR-Prozesse überprüfen</li>
+            {ocrIssues > 0 && (
+              <li style={styles.tipItem}>🔍 {ocrIssues} OCR-Prozesse überprüfen</li>
             )}
-            {files.filter(f => !(f.markers || []).length && !f.dueDate && !f.note).length > 0 && (
-              <li style={styles.tipItem}>📝 {files.filter(f => !(f.markers || []).length && !f.dueDate && !f.note).length} Verträge kategorisieren und Fälligkeiten setzen</li>
+            {needsCategorization > 0 && (
+              <li style={styles.tipItem}>📝 {needsCategorization} Verträge kategorisieren und Fälligkeiten setzen</li>
             )}
-            {files.filter(f => f.dueDate && new Date(f.dueDate) < new Date()).length === 0 && 
-             files.filter(f => (f.markers || []).includes('URGENT')).length === 0 && (
+            {overdue === 0 && files.filter(f => (f.markers || []).includes('URGENT')).length === 0 && (
               <li style={styles.tipItem}>✅ Alle kritischen Punkte sind bearbeitet</li>
             )}
           </ul>
