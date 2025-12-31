@@ -1,9 +1,20 @@
-# mycontracts
+# mycontracts – Vertrags-Cockpit
 
-Leichtgewichtige Vertragsverwaltung (MVP) mit OCR-Matching, Status-Markern und Task-Management.
+**Cockpit zur Vertragsoptimierung und Zukunftsplanung** mit OCR-Matching, Status-Markern und intelligenter Task-Verwaltung.
+
+## Kernfokus: Optimierung & Planung
+
+Das Vertrags-Cockpit bietet einen **strategischen Überblick** über alle Verträge und hilft dabei:
+
+✅ **Handlungsbedarfe zu erkennen** – Überfällige Verträge, fehlende Informationen, dringende Reviews  
+✅ **Zukunft zu planen** – Fälligkeitsdaten, Verlängerungen, Optimierungspotenziale  
+✅ **Prozesse zu optimieren** – Automatisches OCR-Matching, Smart Filtering, Multi-Marker-System  
+✅ **Transparenz zu schaffen** – Vollständiger Überblick über Vertragslandschaft auf einen Blick  
 
 ## Features
 
+✅ **Optimierungs-Cockpit** – Dashboard mit Handlungsbedarfen und Optimierungsempfehlungen  
+✅ **Strategische Planung** – Übersicht über Fälligkeiten und zukünftige Aufgaben  
 ✅ **Datei-Upload** mit automatischer Checksumme und Metadaten  
 ✅ **OCR-Watcher** – Automatisches Matching von OCR-JSONs zu Dateien mit Retry-Logik  
 ✅ **Multi-Marker-System** – Mehrere unabhängige Tags pro Vertrag (URGENT, REVIEW, etc.)  
@@ -18,6 +29,35 @@ Leichtgewichtige Vertragsverwaltung (MVP) mit OCR-Matching, Status-Markern und T
 - [API.md](API.md) – Vollständige REST API Referenz (Marker, Due Dates, Notes)
 
 ## Benutzeroberfläche
+
+### Optimierungs-Cockpit – Strategischer Überblick
+
+Das Cockpit zeigt auf einen Blick die wichtigsten Kennzahlen und Handlungsbedarfe:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  ⚙️ Vertrags-Cockpit                           Backend: ok                 │
+│  Vertragsoptimierung & Zukunftsplanung                                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  📊 Optimierungs-Cockpit                                                   │
+│  ┌──────────────┬──────────────┬──────────────┬──────────────┐            │
+│  │ ⚠️ Handlungs- │ 📅 Fällig-   │ 🔍 OCR-      │ 📋 Gesamt    │            │
+│  │    bedarf     │    keiten    │    Status    │              │            │
+│  │      3        │      5       │      2       │     42       │            │
+│  │ Verträge      │ In den       │ Benötigen    │ Verträge     │            │
+│  │ benötigen     │ nächsten     │ OCR-Über-    │ im System    │            │
+│  │ Aufmerksamkeit│ 30 Tagen     │ prüfung      │              │            │
+│  └──────────────┴──────────────┴──────────────┴──────────────┘            │
+│                                                                             │
+│  💡 Optimierungsempfehlungen                                               │
+│   • 🔴 1 überfällige Verträge prüfen                                       │
+│   • 🟣 2 Verträge mit unvollständigen Informationen vervollständigen       │
+│   • 🔍 2 OCR-Prozesse überprüfen                                           │
+│   • 📝 15 Verträge kategorisieren und Fälligkeiten setzen                  │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
 
 ### Übersicht – Dateiliste und Filter
 

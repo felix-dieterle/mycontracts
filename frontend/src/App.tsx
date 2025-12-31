@@ -227,13 +227,27 @@ function FilesShell() {
 
   const selectedFile = selectedId ? files.find(f => f.id === selectedId) || null : null
   const visibleFiles = getFiltered(files, markerFilter, ocrFilter)
+  
+  // Compute dashboard metrics once
+  const now = new Date()
+  const in30Days = new Date(Date.now() + 30*24*60*60*1000)
+  const overdue = files.filter(f => f.dueDate && new Date(f.dueDate) < now).length
+  const urgent = files.filter(f => (f.markers || []).includes('URGENT')).length
+  const needsAttention = files.filter(f => {
+    const markers = f.markers || []
+    return markers.includes('URGENT') || markers.includes('REVIEW') || markers.includes('MISSING_INFO') || (f.dueDate && new Date(f.dueDate) < now)
+  }).length
+  const upcomingDueDates = files.filter(f => f.dueDate && new Date(f.dueDate) < in30Days).length
+  const ocrIssues = files.filter(f => f.ocrStatus === 'PENDING' || f.ocrStatus === 'FAILED').length
+  const missingInfo = files.filter(f => (f.markers || []).includes('MISSING_INFO')).length
+  const needsCategorization = files.filter(f => !(f.markers || []).length && !f.dueDate && !f.note).length
 
   return (
     <div style={styles.page}>
       <header style={styles.header}>
         <div>
-          <h1 style={styles.title}>mycontracts</h1>
-          <p style={styles.muted}>Upload, Liste und Detail inkl. OCR</p>
+          <h1 style={styles.title}>⚙️ Vertrags-Cockpit</h1>
+          <p style={styles.muted}>Vertragsoptimierung & Zukunftsplanung</p>
         </div>
         <span style={{ ...styles.status, backgroundColor: health === 'ok' ? '#c5f6c5' : '#ffe3e3' }}>
           Backend: {health}
@@ -251,6 +265,52 @@ function FilesShell() {
           </button>
         </form>
         {error && <div style={styles.error}>{error}</div>}
+      </section>
+
+      <section style={styles.dashboardCard}>
+        <h2 style={styles.h2}>📊 Optimierungs-Cockpit</h2>
+        <div style={styles.dashboardGrid}>
+          <div style={styles.insightCard}>
+            <div style={styles.insightTitle}>⚠️ Handlungsbedarf</div>
+            <div style={styles.insightValue}>{needsAttention}</div>
+            <div style={styles.insightLabel}>Verträge benötigen Aufmerksamkeit</div>
+          </div>
+          <div style={styles.insightCard}>
+            <div style={styles.insightTitle}>📅 Fälligkeiten</div>
+            <div style={styles.insightValue}>{upcomingDueDates}</div>
+            <div style={styles.insightLabel}>In den nächsten 30 Tagen</div>
+          </div>
+          <div style={styles.insightCard}>
+            <div style={styles.insightTitle}>🔍 OCR-Status</div>
+            <div style={styles.insightValue}>{ocrIssues}</div>
+            <div style={styles.insightLabel}>Benötigen OCR-Überprüfung</div>
+          </div>
+          <div style={styles.insightCard}>
+            <div style={styles.insightTitle}>📋 Gesamt</div>
+            <div style={styles.insightValue}>{files.length}</div>
+            <div style={styles.insightLabel}>Verträge im System</div>
+          </div>
+        </div>
+        <div style={styles.optimizationTips}>
+          <div style={styles.tipsTitle}>💡 Optimierungsempfehlungen</div>
+          <ul style={styles.tipsList}>
+            {overdue > 0 && (
+              <li style={styles.tipItem}>🔴 {overdue} überfällige Verträge prüfen</li>
+            )}
+            {missingInfo > 0 && (
+              <li style={styles.tipItem}>🟣 {missingInfo} Verträge mit unvollständigen Informationen vervollständigen</li>
+            )}
+            {ocrIssues > 0 && (
+              <li style={styles.tipItem}>🔍 {ocrIssues} OCR-Prozesse überprüfen</li>
+            )}
+            {needsCategorization > 0 && (
+              <li style={styles.tipItem}>📝 {needsCategorization} Verträge kategorisieren und Fälligkeiten setzen</li>
+            )}
+            {overdue === 0 && urgent === 0 && (
+              <li style={styles.tipItem}>✅ Alle kritischen Punkte sind bearbeitet</li>
+            )}
+          </ul>
+        </div>
       </section>
 
       <div style={styles.grid}>
@@ -443,6 +503,16 @@ const styles: Record<string, React.CSSProperties> = {
   muted: { color: '#6b7280', margin: 0 },
   status: { padding: '6px 10px', borderRadius: 8, fontSize: 13, border: '1px solid #e5e7eb' },
   card: { background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 16, boxShadow: '0 4px 18px rgba(15,23,42,0.04)', display: 'flex', flexDirection: 'column', gap: 8 },
+  dashboardCard: { background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', border: '1px solid #e5e7eb', borderRadius: 12, padding: 20, boxShadow: '0 4px 18px rgba(15,23,42,0.12)', display: 'flex', flexDirection: 'column', gap: 16, color: '#fff' },
+  dashboardGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 },
+  insightCard: { background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)', borderRadius: 10, padding: 16, border: '1px solid rgba(255,255,255,0.2)', display: 'flex', flexDirection: 'column', gap: 6 },
+  insightTitle: { fontSize: 13, fontWeight: 600, opacity: 0.9 },
+  insightValue: { fontSize: 32, fontWeight: 700 },
+  insightLabel: { fontSize: 12, opacity: 0.8 },
+  optimizationTips: { background: 'rgba(255,255,255,0.1)', borderRadius: 10, padding: 16, border: '1px solid rgba(255,255,255,0.2)' },
+  tipsTitle: { fontSize: 15, fontWeight: 600, marginBottom: 12 },
+  tipsList: { margin: 0, paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 6 },
+  tipItem: { fontSize: 14, lineHeight: '1.5' },
   uploadRow: { display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' },
   label: { fontSize: 13, fontWeight: 600, color: '#475569' },
   fileInput: { marginTop: 6 },
