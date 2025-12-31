@@ -229,13 +229,16 @@ function FilesShell() {
   const visibleFiles = getFiltered(files, markerFilter, ocrFilter)
   
   // Compute dashboard metrics once
+  const now = new Date()
+  const in30Days = new Date(Date.now() + 30*24*60*60*1000)
+  const overdue = files.filter(f => f.dueDate && new Date(f.dueDate) < now).length
+  const urgent = files.filter(f => (f.markers || []).includes('URGENT')).length
   const needsAttention = files.filter(f => {
     const markers = f.markers || []
-    return markers.includes('URGENT') || markers.includes('REVIEW') || markers.includes('MISSING_INFO') || (f.dueDate && new Date(f.dueDate) < new Date())
+    return markers.includes('URGENT') || markers.includes('REVIEW') || markers.includes('MISSING_INFO') || (f.dueDate && new Date(f.dueDate) < now)
   }).length
-  const upcomingDueDates = files.filter(f => f.dueDate && new Date(f.dueDate) < new Date(Date.now() + 30*24*60*60*1000)).length
+  const upcomingDueDates = files.filter(f => f.dueDate && new Date(f.dueDate) < in30Days).length
   const ocrIssues = files.filter(f => f.ocrStatus === 'PENDING' || f.ocrStatus === 'FAILED').length
-  const overdue = files.filter(f => f.dueDate && new Date(f.dueDate) < new Date()).length
   const missingInfo = files.filter(f => (f.markers || []).includes('MISSING_INFO')).length
   const needsCategorization = files.filter(f => !(f.markers || []).length && !f.dueDate && !f.note).length
 
@@ -303,7 +306,7 @@ function FilesShell() {
             {needsCategorization > 0 && (
               <li style={styles.tipItem}>📝 {needsCategorization} Verträge kategorisieren und Fälligkeiten setzen</li>
             )}
-            {overdue === 0 && files.filter(f => (f.markers || []).includes('URGENT')).length === 0 && (
+            {overdue === 0 && urgent === 0 && (
               <li style={styles.tipItem}>✅ Alle kritischen Punkte sind bearbeitet</li>
             )}
           </ul>
