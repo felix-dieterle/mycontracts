@@ -1,5 +1,5 @@
 import React from 'react'
-import { FileSummary, FileDetail, NeedsAttention, MARKER_OPTIONS } from '../types'
+import { FileSummary, FileDetail, MarkerFilter, MARKER_OPTIONS } from '../types'
 import { formatBytes, formatDate } from '../utils'
 import { styles, markerBadgeStyle, ocrBadgeStyle } from '../styles/styles'
 
@@ -7,11 +7,11 @@ interface FileListProps {
   files: FileSummary[]
   selectedId: number | null
   listState: 'idle' | 'loading' | 'error'
-  markerFilter: NeedsAttention
+  markerFilter: MarkerFilter
   ocrFilter: string
   detail: FileDetail | null
   onSelectFile: (id: number) => void
-  onMarkerFilterChange: (filter: NeedsAttention) => void
+  onMarkerFilterChange: (filter: MarkerFilter) => void
   onOcrFilterChange: (filter: string) => void
 }
 

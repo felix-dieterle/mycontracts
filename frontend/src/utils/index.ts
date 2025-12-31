@@ -1,4 +1,4 @@
-import { FileSummary, NeedsAttention } from '../types'
+import { FileSummary, MarkerFilter, NEEDS_ATTENTION_MARKERS } from '../types'
 
 export function formatBytes(size?: number) {
   if (size == null) return 'n/a'
@@ -14,14 +14,18 @@ export function formatDate(iso?: string) {
   return d.toLocaleString()
 }
 
-export function getFiltered(files: FileSummary[], filter: NeedsAttention, ocr: string) {
+export function getFiltered(files: FileSummary[], filter: MarkerFilter, ocr: string) {
   return files.filter(f => {
     let markerOk: boolean
     if (filter === 'NEEDS_ATTENTION') {
       const markers = f.markers || []
-      markerOk = markers.some(m => m === 'URGENT' || m === 'REVIEW' || m === 'MISSING_INFO') || (f.dueDate && new Date(f.dueDate) < new Date())
+      markerOk = markers.some(m => NEEDS_ATTENTION_MARKERS.includes(m)) || (f.dueDate && new Date(f.dueDate) < new Date())
+    } else if (filter === 'ALL') {
+      markerOk = true
     } else {
-      markerOk = filter === 'ALL'
+      // Filter by specific marker
+      const markers = f.markers || []
+      markerOk = markers.includes(filter)
     }
     const ocrValue = f.ocrStatus || 'NONE'
     const ocrOk = ocr === 'ALL' || ocrValue === ocr

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom'
-import { FileSummary, FileDetail, NeedsAttention } from './types'
+import { FileSummary, FileDetail, MarkerFilter } from './types'
 import { apiBase } from './utils/apiConfig'
 import { getFiltered } from './utils'
 import { styles } from './styles/styles'
@@ -31,7 +31,7 @@ function FilesShell() {
   const [detailState, setDetailState] = useState<'idle' | 'loading' | 'error'>('idle')
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [markerFilter, setMarkerFilter] = useState<NeedsAttention>('ALL')
+  const [markerFilter, setMarkerFilter] = useState<MarkerFilter>('ALL')
   const [ocrFilter, setOcrFilter] = useState<string>('ALL')
   const [noteDraft, setNoteDraft] = useState<string>('')
   const [savingNote, setSavingNote] = useState(false)

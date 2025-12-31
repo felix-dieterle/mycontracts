@@ -24,6 +24,9 @@ export type FileDetail = FileSummary & {
   note?: string | null
 }
 
-export type NeedsAttention = 'ALL' | 'NEEDS_ATTENTION'
+export type MarkerFilter = 'ALL' | 'NEEDS_ATTENTION' | string
 
 export const MARKER_OPTIONS = ['URGENT', 'REVIEW', 'MISSING_INFO', 'INCOMPLETE_OCR', 'FOLLOW_UP']
+
+// Markers that indicate a file needs attention
+export const NEEDS_ATTENTION_MARKERS = ['URGENT', 'REVIEW', 'MISSING_INFO']
