@@ -1,50 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom'
-
-type FileSummary = {
-  id: number
-  filename: string
-  mime?: string
-  size?: number
-  checksum?: string
-  createdAt?: string
-  markers?: string[]
-  dueDate?: string | null
-  ocrStatus?: string | null
-}
-
-type OcrInfo = {
-  id: number
-  status: string
-  createdAt?: string
-  processedAt?: string
-  retryCount?: number
-  rawJson?: string
-}
-
-type FileDetail = FileSummary & {
-  ocr?: OcrInfo | null
-  note?: string | null
-}
-
-type NeedsAttention = 'ALL' | 'NEEDS_ATTENTION'
-const MARKER_OPTIONS = ['URGENT', 'REVIEW', 'MISSING_INFO', 'INCOMPLETE_OCR', 'FOLLOW_UP']
-
-// Auto-detect API URL: if env var set, use it; else construct from current hostname on port 8080
-const apiBase = import.meta.env.VITE_API_URL || (() => {
-  const protocol = window.location.protocol
-  const hostname = window.location.hostname
-  
-  // In Codespaces, hostname looks like: username-abc123-5173.app.github.dev
-  // Replace 5173 with 8080 for backend
-  if (hostname.includes('app.github.dev')) {
-    const backendHost = hostname.replace('-5173.', '-8080.')
-    return `${protocol}//${backendHost}`
-  }
-  
-  // For localhost dev (localhost:5173 → localhost:8080)
-  return `${protocol}//${hostname}:8080`
-})()
+import { FileSummary, FileDetail, NeedsAttention } from './types'
+import { apiBase } from './utils/apiConfig'
+import { getFiltered } from './utils'
+import { styles } from './styles/styles'
+import { Dashboard } from './components/Dashboard'
+import { FileList } from './components/FileList'
+import { FileDetail as FileDetailComponent } from './components/FileDetail'
 
 export default function App() {
   return (
@@ -225,22 +187,7 @@ function FilesShell() {
     }
   }
 
-  const selectedFile = selectedId ? files.find(f => f.id === selectedId) || null : null
   const visibleFiles = getFiltered(files, markerFilter, ocrFilter)
-  
-  // Compute dashboard metrics once
-  const now = new Date()
-  const in30Days = new Date(Date.now() + 30*24*60*60*1000)
-  const overdue = files.filter(f => f.dueDate && new Date(f.dueDate) < now).length
-  const urgent = files.filter(f => (f.markers || []).includes('URGENT')).length
-  const needsAttention = files.filter(f => {
-    const markers = f.markers || []
-    return markers.includes('URGENT') || markers.includes('REVIEW') || markers.includes('MISSING_INFO') || (f.dueDate && new Date(f.dueDate) < now)
-  }).length
-  const upcomingDueDates = files.filter(f => f.dueDate && new Date(f.dueDate) < in30Days).length
-  const ocrIssues = files.filter(f => f.ocrStatus === 'PENDING' || f.ocrStatus === 'FAILED').length
-  const missingInfo = files.filter(f => (f.markers || []).includes('MISSING_INFO')).length
-  const needsCategorization = files.filter(f => !(f.markers || []).length && !f.dueDate && !f.note).length
 
   return (
     <div style={styles.page}>
@@ -267,304 +214,38 @@ function FilesShell() {
         {error && <div style={styles.error}>{error}</div>}
       </section>
 
-      <section style={styles.dashboardCard}>
-        <h2 style={styles.h2}>📊 Optimierungs-Cockpit</h2>
-        <div style={styles.dashboardGrid}>
-          <div style={styles.insightCard}>
-            <div style={styles.insightTitle}>⚠️ Handlungsbedarf</div>
-            <div style={styles.insightValue}>{needsAttention}</div>
-            <div style={styles.insightLabel}>Verträge benötigen Aufmerksamkeit</div>
-          </div>
-          <div style={styles.insightCard}>
-            <div style={styles.insightTitle}>📅 Fälligkeiten</div>
-            <div style={styles.insightValue}>{upcomingDueDates}</div>
-            <div style={styles.insightLabel}>In den nächsten 30 Tagen</div>
-          </div>
-          <div style={styles.insightCard}>
-            <div style={styles.insightTitle}>🔍 OCR-Status</div>
-            <div style={styles.insightValue}>{ocrIssues}</div>
-            <div style={styles.insightLabel}>Benötigen OCR-Überprüfung</div>
-          </div>
-          <div style={styles.insightCard}>
-            <div style={styles.insightTitle}>📋 Gesamt</div>
-            <div style={styles.insightValue}>{files.length}</div>
-            <div style={styles.insightLabel}>Verträge im System</div>
-          </div>
-        </div>
-        <div style={styles.optimizationTips}>
-          <div style={styles.tipsTitle}>💡 Optimierungsempfehlungen</div>
-          <ul style={styles.tipsList}>
-            {overdue > 0 && (
-              <li style={styles.tipItem}>🔴 {overdue} überfällige Verträge prüfen</li>
-            )}
-            {missingInfo > 0 && (
-              <li style={styles.tipItem}>🟣 {missingInfo} Verträge mit unvollständigen Informationen vervollständigen</li>
-            )}
-            {ocrIssues > 0 && (
-              <li style={styles.tipItem}>🔍 {ocrIssues} OCR-Prozesse überprüfen</li>
-            )}
-            {needsCategorization > 0 && (
-              <li style={styles.tipItem}>📝 {needsCategorization} Verträge kategorisieren und Fälligkeiten setzen</li>
-            )}
-            {overdue === 0 && urgent === 0 && (
-              <li style={styles.tipItem}>✅ Alle kritischen Punkte sind bearbeitet</li>
-            )}
-          </ul>
-        </div>
-      </section>
+      <Dashboard files={files} />
 
       <div style={styles.grid}>
-        <section style={styles.card}>
-          <div style={styles.sectionHeader}>
-            <h2 style={styles.h2}>Dateien</h2>
-            {listState === 'loading' && <span style={styles.badge}>lädt...</span>}
-            {listState === 'error' && <span style={{ ...styles.badge, background: '#ffe3e3', color: '#b00020' }}>Fehler</span>}
-          </div>
-          <div style={styles.filterRow}>
-            <label style={styles.label}>Marker
-              <select value={markerFilter} onChange={e => setMarkerFilter(e.target.value as NeedsAttention)} style={styles.select}>
-                <option value="ALL">Alle</option>
-                <option value="NEEDS_ATTENTION">⚠️ Needs Attention</option>
-                {MARKER_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}
-              </select>
-            </label>
-            <label style={styles.label}>OCR
-              <select value={ocrFilter} onChange={e => setOcrFilter(e.target.value)} style={styles.select}>
-                <option value="ALL">Alle</option>
-                <option value="MATCHED">MATCHED</option>
-                <option value="PENDING">PENDING</option>
-                <option value="FAILED">FAILED</option>
-                <option value="NONE">Keine</option>
-              </select>
-            </label>
-          </div>
-          {visibleFiles.length === 0 && <p style={styles.muted}>Keine Dateien für diesen Filter.</p>}
-          <ul style={styles.list}>
-            {visibleFiles.map(f => (
-              <li
-                key={f.id}
-                style={{
-                  ...styles.listItem,
-                  borderColor: selectedId === f.id ? '#2d6cdf' : '#e5e7eb',
-                  background: selectedId === f.id ? '#eef4ff' : '#fff'
-                }}
-                onClick={() => navigate(`/files/${f.id}`)}
-              >
-                <div style={styles.listTitle}>{f.filename}</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                  <span style={styles.listMeta}>{formatBytes(f.size)} · {formatDate(f.createdAt)}</span>
-                  {(f.markers || []).map(m => <span key={m} style={{ ...styles.badge, ...markerBadgeStyle(m) }}>{m}</span>)}
-                  {f.dueDate && <span style={{ ...styles.badge, background: '#cffafe', color: '#164e63', borderColor: '#a5f3fc' }}>📅 {formatDate(f.dueDate)}</span>}
-                  {f.ocrStatus && <span style={{ ...styles.badge, ...ocrBadgeStyle(f.ocrStatus) }}>OCR {f.ocrStatus}</span>}
-                  {detail?.id === f.id && detail.note && <span style={{ ...styles.badge, background: '#f3e8ff', color: '#6b21a8', borderColor: '#e9d5ff' }}>📝 Note</span>}
-                </div>
-              </li>
-            ))}
-          </ul>
-          <div style={styles.legendRow}>
-            {MARKER_OPTIONS.map(m => <span key={m} style={{ ...styles.badge, ...markerBadgeStyle(m) }}>{m}</span>)}
-            <span style={{ ...styles.badge, ...ocrBadgeStyle('MATCHED') }}>OCR MATCHED</span>
-            <span style={{ ...styles.badge, ...ocrBadgeStyle('PENDING') }}>OCR PENDING</span>
-            <span style={{ ...styles.badge, ...ocrBadgeStyle('FAILED') }}>OCR FAILED</span>
-          </div>
-        </section>
+        <FileList
+          files={visibleFiles}
+          selectedId={selectedId}
+          listState={listState}
+          markerFilter={markerFilter}
+          ocrFilter={ocrFilter}
+          detail={detail}
+          onSelectFile={(id) => navigate(`/files/${id}`)}
+          onMarkerFilterChange={setMarkerFilter}
+          onOcrFilterChange={setOcrFilter}
+        />
 
-        <section style={styles.card}>
-          <div style={styles.sectionHeader}>
-            <h2 style={styles.h2}>Detail</h2>
-            {detailState === 'loading' && <span style={styles.badge}>lädt...</span>}
-            {detailState === 'error' && <span style={{ ...styles.badge, background: '#ffe3e3', color: '#b00020' }}>Fehler</span>}
-          </div>
-          {!selectedFile && <p style={styles.muted}>Wähle eine Datei aus.</p>}
-          {selectedFile && detail && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div>
-                <div style={styles.label}>Datei</div>
-                <div>{detail.filename}</div>
-                <div style={styles.listMeta}>{formatBytes(detail.size)} · {detail.mime || 'unbekannt'} · {formatDate(detail.createdAt)}</div>
-              </div>
-              <div>
-                <div style={styles.label}>Checksumme</div>
-                <div style={styles.code}>{detail.checksum || 'n/a'}</div>
-              </div>
-              <div>
-                <div style={styles.label}>Marker (Multiple)</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {MARKER_OPTIONS.map(m => (
-                    <label key={m} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                      <input
-                        type="checkbox"
-                        checked={selectedMarkersForDetail.includes(m)}
-                        onChange={e => {
-                          if (e.target.checked) {
-                            setSelectedMarkersForDetail([...selectedMarkersForDetail, m])
-                          } else {
-                            setSelectedMarkersForDetail(selectedMarkersForDetail.filter(x => x !== m))
-                          }
-                        }}
-                      />
-                      <span style={{ ...styles.badge, ...markerBadgeStyle(m) }}>{m}</span>
-                    </label>
-                  ))}
-                </div>
-                <button style={styles.secondaryButton} onClick={saveMarkers} disabled={savingMarkers}>
-                  {savingMarkers ? 'Speichere...' : 'Marker speichern'}
-                </button>
-              </div>
-              <div>
-                <div style={styles.label}>Due Date (Fälligkeitsdatum)</div>
-                <input
-                  type="date"
-                  value={dueDateDraft}
-                  onChange={e => setDueDateDraft(e.target.value)}
-                  style={styles.select}
-                />
-                <button style={styles.secondaryButton} onClick={saveDueDate} disabled={savingDueDate}>
-                  {savingDueDate ? 'Speichere...' : 'Fälligkeitsdatum speichern'}
-                </button>
-              </div>
-              <div>
-                <div style={styles.label}>Notiz</div>
-                <textarea
-                  value={noteDraft}
-                  onChange={e => setNoteDraft(e.target.value)}
-                  placeholder="Kurze Notiz (Review, Risiken, ToDos)"
-                  rows={4}
-                  style={styles.textarea}
-                />
-                <button style={styles.secondaryButton} onClick={saveNote} disabled={savingNote}>
-                  {savingNote ? 'Speichere...' : 'Notiz speichern'}
-                </button>
-              </div>
-              <div>
-                <a href={`${apiBase}/api/files/${detail.id}/download`} style={styles.link}>Download</a>
-              </div>
-              <div>
-                <div style={styles.label}>OCR</div>
-                {!detail.ocr && <div style={styles.muted}>Keine OCR verknüpft.</div>}
-                {detail.ocr && (
-                  <div style={styles.ocrBox}>
-                    <div style={styles.listMeta}>Status: {detail.ocr.status} · Versuche: {detail.ocr.retryCount ?? 0}</div>
-                    <pre style={styles.pre}>{prettyJson(detail.ocr.rawJson)}</pre>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-        </section>
+        <FileDetailComponent
+          detail={detail}
+          detailState={detailState}
+          selectedMarkersForDetail={selectedMarkersForDetail}
+          noteDraft={noteDraft}
+          dueDateDraft={dueDateDraft}
+          savingMarkers={savingMarkers}
+          savingNote={savingNote}
+          savingDueDate={savingDueDate}
+          onMarkersChange={setSelectedMarkersForDetail}
+          onNoteDraftChange={setNoteDraft}
+          onDueDateDraftChange={setDueDateDraft}
+          onSaveMarkers={saveMarkers}
+          onSaveNote={saveNote}
+          onSaveDueDate={saveDueDate}
+        />
       </div>
     </div>
   )
-}
-
-function formatBytes(size?: number) {
-  if (size == null) return 'n/a'
-  if (size < 1024) return `${size} B`
-  const kb = size / 1024
-  if (kb < 1024) return `${kb.toFixed(1)} KB`
-  return `${(kb / 1024).toFixed(1)} MB`
-}
-
-function formatDate(iso?: string) {
-  if (!iso) return 'n/a'
-  const d = new Date(iso)
-  return d.toLocaleString()
-}
-
-function getFiltered(files: FileSummary[], filter: NeedsAttention, ocr: string) {
-  return files.filter(f => {
-    let markerOk: boolean
-    if (filter === 'NEEDS_ATTENTION') {
-      const markers = f.markers || []
-      markerOk = markers.some(m => m === 'URGENT' || m === 'REVIEW' || m === 'MISSING_INFO') || (f.dueDate && new Date(f.dueDate) < new Date())
-    } else {
-      markerOk = filter === 'ALL'
-    }
-    const ocrValue = f.ocrStatus || 'NONE'
-    const ocrOk = ocr === 'ALL' || ocrValue === ocr
-    return markerOk && ocrOk
-  })
-}
-
-function prettyJson(raw?: string) {
-  if (!raw) return '–'
-  try {
-    const parsed = JSON.parse(raw)
-    return JSON.stringify(parsed, null, 2)
-  } catch {
-    return raw
-  }
-}
-
-const styles: Record<string, React.CSSProperties> = {
-  page: { fontFamily: '"Inter", system-ui, -apple-system, sans-serif', background: '#f7f9fc', minHeight: '100vh', padding: '24px', color: '#0f172a' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  title: { margin: 0, fontSize: 24, color: '#0f172a' },
-  muted: { color: '#6b7280', margin: 0 },
-  status: { padding: '6px 10px', borderRadius: 8, fontSize: 13, border: '1px solid #e5e7eb' },
-  card: { background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 16, boxShadow: '0 4px 18px rgba(15,23,42,0.04)', display: 'flex', flexDirection: 'column', gap: 8 },
-  dashboardCard: { background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', border: '1px solid #e5e7eb', borderRadius: 12, padding: 20, boxShadow: '0 4px 18px rgba(15,23,42,0.12)', display: 'flex', flexDirection: 'column', gap: 16, color: '#fff' },
-  dashboardGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 },
-  insightCard: { background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)', borderRadius: 10, padding: 16, border: '1px solid rgba(255,255,255,0.2)', display: 'flex', flexDirection: 'column', gap: 6 },
-  insightTitle: { fontSize: 13, fontWeight: 600, opacity: 0.9 },
-  insightValue: { fontSize: 32, fontWeight: 700 },
-  insightLabel: { fontSize: 12, opacity: 0.8 },
-  optimizationTips: { background: 'rgba(255,255,255,0.1)', borderRadius: 10, padding: 16, border: '1px solid rgba(255,255,255,0.2)' },
-  tipsTitle: { fontSize: 15, fontWeight: 600, marginBottom: 12 },
-  tipsList: { margin: 0, paddingLeft: 20, display: 'flex', flexDirection: 'column', gap: 6 },
-  tipItem: { fontSize: 14, lineHeight: '1.5' },
-  uploadRow: { display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' },
-  label: { fontSize: 13, fontWeight: 600, color: '#475569' },
-  fileInput: { marginTop: 6 },
-  primaryButton: { background: '#2d6cdf', color: '#fff', border: 'none', padding: '10px 16px', borderRadius: 10, cursor: 'pointer' },
-  error: { background: '#ffe3e3', color: '#b00020', padding: '8px 12px', borderRadius: 8, border: '1px solid #f5c2c7' },
-  grid: { display: 'grid', gridTemplateColumns: '320px 1fr', gap: 16, alignItems: 'start', marginTop: 16 },
-  sectionHeader: { display: 'flex', alignItems: 'center', gap: 8 },
-  h2: { margin: 0, fontSize: 18 },
-  badge: { fontSize: 12, padding: '4px 8px', borderRadius: 8, background: '#eef2ff', color: '#3730a3' },
-  list: { listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 },
-  listItem: { border: '1px solid #e5e7eb', borderRadius: 10, padding: 10, cursor: 'pointer' },
-  listTitle: { fontWeight: 600, color: '#0f172a' },
-  listMeta: { fontSize: 12, color: '#6b7280' },
-  link: { color: '#2d6cdf', textDecoration: 'none', fontWeight: 600 },
-  pre: { background: '#0f172a', color: '#e2e8f0', padding: 12, borderRadius: 8, maxHeight: 260, overflow: 'auto', fontSize: 12 },
-  code: { fontFamily: 'monospace', fontSize: 12, color: '#0f172a', background: '#f1f5f9', padding: '4px 6px', borderRadius: 6 },
-  ocrBox: { display: 'flex', flexDirection: 'column', gap: 6 },
-  select: { padding: '8px 10px', borderRadius: 8, border: '1px solid #cbd5e1', background: '#fff' },
-  filterRow: { display: 'flex', gap: 12, flexWrap: 'wrap', margin: '8px 0' },
-  legendRow: { display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 },
-  textarea: { width: '100%', padding: 10, borderRadius: 10, border: '1px solid #cbd5e1', fontFamily: 'inherit', fontSize: 14, minHeight: 100 },
-  secondaryButton: { marginTop: 8, background: '#f8fafc', color: '#0f172a', border: '1px solid #cbd5e1', padding: '8px 12px', borderRadius: 8, cursor: 'pointer' },
-}
-
-function markerBadgeStyle(marker: string): React.CSSProperties {
-  const base = { border: '1px solid transparent' }
-  switch (marker) {
-    case 'URGENT':
-      return { ...base, background: '#fee2e2', color: '#b91c1c', borderColor: '#fecaca' }
-    case 'REVIEW':
-      return { ...base, background: '#fef9c3', color: '#854d0e', borderColor: '#fde68a' }
-    case 'MISSING_INFO':
-      return { ...base, background: '#e0d5ff', color: '#6d28d9', borderColor: '#d8b4fe' }
-    case 'INCOMPLETE_OCR':
-      return { ...base, background: '#fce7f3', color: '#831843', borderColor: '#fbcfe8' }
-    case 'FOLLOW_UP':
-      return { ...base, background: '#dcfce7', color: '#166534', borderColor: '#bbf7d0' }
-    default:
-      return { ...base, background: '#e2e8f0', color: '#475569', borderColor: '#cbd5e1' }
-  }
-}
-
-function ocrBadgeStyle(status: string): React.CSSProperties {
-  const base = { border: '1px solid transparent' }
-  switch (status) {
-    case 'MATCHED':
-      return { ...base, background: '#dcfce7', color: '#166534', borderColor: '#bbf7d0' }
-    case 'PENDING':
-      return { ...base, background: '#fef9c3', color: '#854d0e', borderColor: '#fde68a' }
-    case 'FAILED':
-      return { ...base, background: '#fee2e2', color: '#b91c1c', borderColor: '#fecaca' }
-    default:
-      return { ...base, background: '#e0f2fe', color: '#075985', borderColor: '#bae6fd' }
-  }
 }
