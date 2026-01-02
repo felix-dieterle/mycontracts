@@ -38,7 +38,7 @@ export type ChatMessage = {
 }
 
 export type ChatRequest = {
-  messages: Array<{ role: string; content: string }>
+  messages: Array<{ role: 'user' | 'assistant'; content: string }>
   fileId?: number | null
 }
 

@@ -34,7 +34,10 @@ export function Chat({ fileId, filename }: ChatProps) {
 
     try {
       const request: ChatRequest = {
-        messages: [...messages, userMessage].map(m => ({ role: m.role, content: m.content })),
+        messages: messages.concat(userMessage).map(m => ({ 
+          role: m.role === 'error' ? 'user' : m.role, 
+          content: m.content 
+        })),
         fileId: fileId || null
       }
 

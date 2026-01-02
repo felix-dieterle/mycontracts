@@ -185,7 +185,8 @@ public class AiService {
         context.append("File: ").append(file.getFilename()).append("\n");
         context.append("Type: ").append(file.getMime()).append("\n");
         
-        // Parse markers from JSON string
+        // Parse markers from comma-separated string format (e.g., "URGENT,REVIEW,MISSING_INFO")
+        // Note: Despite the field name "markersJson", the actual format is comma-separated, not JSON
         String markersJson = file.getMarkersJson();
         if (markersJson != null && !markersJson.isBlank()) {
             List<String> markers = Arrays.asList(markersJson.split(","));
