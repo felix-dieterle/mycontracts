@@ -1,5 +1,9 @@
 # Test Results for OpenRouter.ai Integration PR
 
+## Visual Overview
+
+![Test Results Screenshot](https://github.com/user-attachments/assets/e9c5fdc4-26f8-482f-9f9a-f39bc6ed4876)
+
 ## Summary
 
 ✅ **All tests passed successfully**
