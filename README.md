@@ -15,6 +15,7 @@ Das Vertrags-Cockpit bietet einen **strategischen Überblick** über alle Vertr�
 
 ✅ **Optimierungs-Cockpit** – Dashboard mit Handlungsbedarfen und Optimierungsempfehlungen  
 ✅ **Strategische Planung** – Übersicht über Fälligkeiten und zukünftige Aufgaben  
+✅ **AI-Unterstützung** – Chat und automatische Vertragsoptimierung mit OpenRouter.ai  
 ✅ **Datei-Upload** mit automatischer Checksumme und Metadaten  
 ✅ **OCR-Watcher** – Automatisches Matching von OCR-JSONs zu Dateien mit Retry-Logik  
 ✅ **Multi-Marker-System** – Mehrere unabhängige Tags pro Vertrag (URGENT, REVIEW, etc.)  
@@ -190,8 +191,33 @@ Wichtige Umgebungsvariablen (in `.env`):
 - `WATCH_DIR` – beobachtetes Verzeichnis für OCR JSONs (Default: `/data/incoming`).
 - `watcher.scan-interval-ms` – Scanintervall in Millisekunden (Default: `5000`).
 - `watcher.max-retries` – Anzahl der Wiederholungsversuche für nicht zugeordnete OCRs (Default: `5`).
-- `LLM_PROVIDER` / `GEMINI_API_KEY` – LLM Konfiguration (optional).
+- `OPENROUTER_API_KEY` – API-Schlüssel für OpenRouter.ai (optional, für AI-Features erforderlich).
+- `OPENROUTER_BASE_URL` – OpenRouter API URL (Default: `https://openrouter.ai/api/v1`).
+- `OPENROUTER_MODEL` – LLM-Modell für AI-Features (Default: `openai/gpt-3.5-turbo`).
 - `SPRING_DATASOURCE_URL` – SQLite DataSource URL (Default: `jdbc:sqlite:mycontracts.db`).
+
+### AI-Unterstützung mit OpenRouter.ai
+
+Das System bietet KI-gestützte Funktionen zur Vertragsanalyse und -optimierung über OpenRouter.ai:
+
+**Features:**
+- 💬 **AI Chat** – Stelle Fragen zu deinen Verträgen im Kontext des gewählten Dokuments
+- 🔍 **Vertragsoptimierung** – Automatische Analyse mit Vorschlägen, Risikoerkennung und Verbesserungsempfehlungen
+- 🌐 **Modell-Flexibilität** – Nutze verschiedene LLM-Modelle (GPT-3.5, GPT-4, Claude, etc.) über OpenRouter
+
+**Konfiguration:**
+1. Erstelle einen Account bei [OpenRouter.ai](https://openrouter.ai)
+2. Generiere einen API-Schlüssel
+3. Setze `OPENROUTER_API_KEY` in deiner `.env` Datei
+4. Optional: Wähle ein Modell via `OPENROUTER_MODEL` (z.B. `anthropic/claude-2`, `openai/gpt-4`)
+
+**Verwendung:**
+- Das Chat-Panel erscheint automatisch in der UI neben dem Detail-Panel
+- Klicke auf "Optimize Contract" für eine automatische Analyse
+- Stelle Fragen wie "Was sind die Hauptrisiken?" oder "Wie kann ich diesen Vertrag verbessern?"
+
+**Hinweis:** Ohne konfigurierten API-Schlüssel sind die AI-Features deaktiviert, alle anderen Funktionen bleiben verfügbar.
+
 
 ### Watcher Service
 
@@ -339,6 +365,62 @@ Content-Type: application/json
 
 {
   "note": "Signature required, legal team contacted"
+}
+```
+
+### AI-Unterstützung
+
+#### Chat with AI
+```http
+POST /api/ai/chat
+Content-Type: application/json
+
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "What are the main risks in this contract?"
+    }
+  ],
+  "fileId": 1
+}
+```
+
+**Response:**
+```json
+{
+  "message": "Based on the contract context...",
+  "role": "assistant",
+  "error": false
+}
+```
+
+#### Optimize Contract
+```http
+POST /api/ai/optimize
+Content-Type: application/json
+
+{
+  "fileId": 1
+}
+```
+
+**Response:**
+```json
+{
+  "suggestions": [
+    "Add termination clause with 30-day notice period",
+    "Include liability cap at contract value"
+  ],
+  "risks": [
+    "Unlimited liability exposure",
+    "No termination clause"
+  ],
+  "improvements": [
+    "Define clear deliverables and milestones",
+    "Add payment schedule details"
+  ],
+  "summary": "Detailed analysis of the contract..."
 }
 ```
 
