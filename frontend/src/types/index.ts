@@ -30,3 +30,27 @@ export const MARKER_OPTIONS = ['URGENT', 'REVIEW', 'MISSING_INFO', 'INCOMPLETE_O
 
 // Markers that indicate a file needs attention
 export const NEEDS_ATTENTION_MARKERS = ['URGENT', 'REVIEW', 'MISSING_INFO']
+
+// AI Chat types
+export type ChatMessage = {
+  role: 'user' | 'assistant' | 'error'
+  content: string
+}
+
+export type ChatRequest = {
+  messages: Array<{ role: string; content: string }>
+  fileId?: number | null
+}
+
+export type ChatResponse = {
+  message: string
+  role: string
+  error: boolean
+}
+
+export type ContractOptimizationResponse = {
+  suggestions: string[]
+  risks: string[]
+  improvements: string[]
+  summary: string
+}
