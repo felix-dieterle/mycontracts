@@ -7,6 +7,7 @@ import { styles } from './styles/styles'
 import { Dashboard } from './components/Dashboard'
 import { FileList } from './components/FileList'
 import { FileDetail as FileDetailComponent } from './components/FileDetail'
+import { Chat } from './components/Chat'
 
 export default function App() {
   return (
@@ -216,7 +217,7 @@ function FilesShell() {
 
       <Dashboard files={files} />
 
-      <div style={styles.grid}>
+      <div style={{ ...styles.grid, gridTemplateColumns: '320px 1fr 400px' }}>
         <FileList
           files={visibleFiles}
           selectedId={selectedId}
@@ -245,6 +246,8 @@ function FilesShell() {
           onSaveNote={saveNote}
           onSaveDueDate={saveDueDate}
         />
+
+        <Chat fileId={selectedId} filename={detail?.filename} />
       </div>
     </div>
   )
