@@ -128,6 +128,10 @@ public class FileStorageService {
         return storedFileRepository.save(file);
     }
 
+    public StoredFile save(StoredFile file) {
+        return storedFileRepository.save(file);
+    }
+
     private String checksum(Path file) throws IOException {
         try (InputStream in = Files.newInputStream(file)) {
             MessageDigest md = MessageDigest.getInstance("SHA-256");

@@ -4,6 +4,8 @@ import de.flexis.mycontracts.controller.dto.ChatRequest;
 import de.flexis.mycontracts.controller.dto.ChatResponse;
 import de.flexis.mycontracts.controller.dto.ContractOptimizationRequest;
 import de.flexis.mycontracts.controller.dto.ContractOptimizationResponse;
+import de.flexis.mycontracts.controller.dto.OcrAnalysisRequest;
+import de.flexis.mycontracts.controller.dto.WebSearchRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -14,6 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -90,5 +93,74 @@ class AiControllerIntegrationTest {
         assertThat(response.getStatusCode().is4xxClientError()).isTrue();
         assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().error()).isTrue();
+    }
+
+    @Test
+    void testAnalyzeOcrEndpoint_withoutApiKey_returnsError() {
+        // Given
+        OcrAnalysisRequest request = new OcrAnalysisRequest(1L);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<OcrAnalysisRequest> entity = new HttpEntity<>(request, headers);
+
+        // When
+        ResponseEntity<Map> response = restTemplate.postForEntity(
+                "/api/ai/analyze-ocr",
+                entity,
+                Map.class
+        );
+
+        // Then - should return error when API key is not configured
+        assertThat(response.getStatusCode().is4xxClientError()).isTrue();
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().get("success")).isEqualTo(false);
+        assertThat(response.getBody().get("error").toString()).contains("not configured");
+    }
+
+    @Test
+    void testWebSearchEndpoint_withoutApiKey_returnsError() {
+        // Given
+        WebSearchRequest request = new WebSearchRequest(1L, null);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<WebSearchRequest> entity = new HttpEntity<>(request, headers);
+
+        // When
+        ResponseEntity<Map> response = restTemplate.postForEntity(
+                "/api/ai/web-search",
+                entity,
+                Map.class
+        );
+
+        // Then - should return error when API key is not configured
+        assertThat(response.getStatusCode().is4xxClientError()).isTrue();
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().get("success")).isEqualTo(false);
+        assertThat(response.getBody().get("error").toString()).contains("not configured");
+    }
+
+    @Test
+    void testSearchAndAnalyzeEndpoint_withoutApiKey_returnsError() {
+        // Given
+        WebSearchRequest request = new WebSearchRequest(1L, "test query");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<WebSearchRequest> entity = new HttpEntity<>(request, headers);
+
+        // When
+        ResponseEntity<Map> response = restTemplate.postForEntity(
+                "/api/ai/search-and-analyze",
+                entity,
+                Map.class
+        );
+
+        // Then - should return error when API key is not configured
+        assertThat(response.getStatusCode().is4xxClientError()).isTrue();
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().get("success")).isEqualTo(false);
+        assertThat(response.getBody().get("error").toString()).contains("not configured");
     }
 }
