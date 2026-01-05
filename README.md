@@ -16,6 +16,8 @@ Das Vertrags-Cockpit bietet einen **strategischen Überblick** über alle Vertr�
 ✅ **Optimierungs-Cockpit** – Dashboard mit Handlungsbedarfen und Optimierungsempfehlungen  
 ✅ **Strategische Planung** – Übersicht über Fälligkeiten und zukünftige Aufgaben  
 ✅ **AI-Unterstützung** – Chat und automatische Vertragsoptimierung mit OpenRouter.ai  
+✅ **OCR-Analyse mit AI** – Automatische Extraktion von Vertragsparametern aus OCR-Daten  
+✅ **Web-Suche Integration** – Recherche zusätzlicher Informationen über Verträge und Anbieter  
 ✅ **Datei-Upload** mit automatischer Checksumme und Metadaten  
 ✅ **OCR-Watcher** – Automatisches Matching von OCR-JSONs zu Dateien mit Retry-Logik  
 ✅ **Multi-Marker-System** – Mehrere unabhängige Tags pro Vertrag (URGENT, REVIEW, etc.)  
@@ -203,7 +205,9 @@ Das System bietet KI-gestützte Funktionen zur Vertragsanalyse und -optimierung 
 **Features:**
 - 💬 **AI Chat** – Stelle Fragen zu deinen Verträgen im Kontext des gewählten Dokuments
 - 🔍 **Vertragsoptimierung** – Automatische Analyse mit Vorschlägen, Risikoerkennung und Verbesserungsempfehlungen
-- 🌐 **Modell-Flexibilität** – Nutze verschiedene LLM-Modelle (GPT-3.5, GPT-4, Claude, etc.) über OpenRouter
+- 📊 **OCR-Datenanalyse** – Automatische Extraktion strukturierter Vertragsparameter aus OCR-Daten
+- 🌐 **Web-Suche** – Online-Recherche zu Anbietern, Produkten und Marktvergleichen
+- 🤖 **Modell-Flexibilität** – Nutze verschiedene LLM-Modelle (GPT-3.5, GPT-4, Claude, Perplexity, etc.) über OpenRouter
 
 **Konfiguration:**
 1. Erstelle einen Account bei [OpenRouter.ai](https://openrouter.ai)
@@ -215,6 +219,54 @@ Das System bietet KI-gestützte Funktionen zur Vertragsanalyse und -optimierung 
 - Das Chat-Panel erscheint automatisch in der UI neben dem Detail-Panel
 - Klicke auf "Optimize Contract" für eine automatische Analyse
 - Stelle Fragen wie "Was sind die Hauptrisiken?" oder "Wie kann ich diesen Vertrag verbessern?"
+
+**OCR-Analyse:**
+Die OCR-Analyse extrahiert automatisch standardisierte Vertragsfelder aus OCR-Daten:
+
+```bash
+# OCR-Daten analysieren und Felder extrahieren
+curl -X POST http://localhost:8080/api/ai/analyze-ocr \
+  -H "Content-Type: application/json" \
+  -d '{"fileId": 1}'
+```
+
+**Extrahierte Felder (typisch für Versicherungsverträge):**
+- `description` – Zusammenfassung des Vertrags
+- `cost_per_month` / `cost_per_year` – Monatliche/Jährliche Kosten
+- `return_on_death` – Todesfallleistung
+- `return_on_quitting` – Rückkaufwert
+- `payment_hold_option` – Möglichkeit zur Beitragspause
+- `current_value` – Aktueller Vertragswert
+- `contract_type` – Vertragsart (Lebensversicherung, Krankenversicherung, etc.)
+- `provider` – Versicherungsgesellschaft
+- `contract_number` – Vertragsnummer
+- `start_date` / `end_date` – Laufzeit
+- `cancellation_period` – Kündigungsfrist
+- `coverage_amount` – Versicherungssumme
+
+Die extrahierten Felder werden automatisch in der Datenbank gespeichert und mit dem Vertrag verknüpft.
+
+**Web-Suche:**
+Nutze Web-Suche um zusätzliche Informationen zu finden:
+
+```bash
+# Anbieter-Informationen recherchieren
+curl -X POST http://localhost:8080/api/ai/web-search \
+  -H "Content-Type: application/json" \
+  -d '{"fileId": 1, "query": "Allianz Lebensversicherung Bewertungen"}'
+
+# Umfassende Analyse mit Web-Recherche
+curl -X POST http://localhost:8080/api/ai/search-and-analyze \
+  -H "Content-Type: application/json" \
+  -d '{"fileId": 1, "query": "Allianz Lebensversicherung Vergleich"}'
+```
+
+Die Web-Suche nutzt spezielle AI-Modelle mit Online-Zugriff (z.B. Perplexity AI) und liefert:
+- Unternehmenshintergrund und Reputation
+- Produktvergleiche und Marktposition
+- Aktuelle Bewertungen und Kundenfeedback
+- Risikoanalyse und Optimierungsempfehlungen
+- Alternative Angebote
 
 **Hinweis:** Ohne konfigurierten API-Schlüssel sind die AI-Features deaktiviert, alle anderen Funktionen bleiben verfügbar.
 
