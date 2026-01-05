@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -24,6 +25,9 @@ import java.util.Optional;
 @Service
 public class OcrAnalysisService {
     private static final Logger log = LoggerFactory.getLogger(OcrAnalysisService.class);
+    
+    private static final double DEFAULT_AI_CONFIDENCE = 0.8;
+    private static final double EXTRACTION_TEMPERATURE = 0.3;
 
     private final WebClient webClient;
     private final OpenRouterConfig config;
@@ -92,7 +96,7 @@ public class OcrAnalysisService {
                     contract,
                     entry.getKey(),
                     entry.getValue(),
-                    0.8, // Default confidence for AI extraction
+                    DEFAULT_AI_CONFIDENCE,
                     FieldSource.LLM
                 );
                 savedFields.add(extractedFieldRepository.save(field));
@@ -144,7 +148,7 @@ public class OcrAnalysisService {
         Map<String, Object> requestBody = Map.of(
             "model", config.getModel(),
             "messages", messages,
-            "temperature", 0.3 // Lower temperature for more consistent extraction
+            "temperature", EXTRACTION_TEMPERATURE
         );
 
         try {
@@ -217,7 +221,7 @@ public class OcrAnalysisService {
 
             // Parse JSON
             JsonNode jsonNode = objectMapper.readTree(cleanedContent);
-            Map<String, String> result = new java.util.HashMap<>();
+            Map<String, String> result = new HashMap<>();
             
             jsonNode.fields().forEachRemaining(entry -> {
                 String value = entry.getValue().asText();
