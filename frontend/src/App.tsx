@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Routes, Route, Navigate, useNavigate, useParams } from 'react-router-dom'
+import { Routes, Route, Navigate, useNavigate, useParams, useLocation } from 'react-router-dom'
 import { FileSummary, FileDetail, MarkerFilter } from './types'
 import { apiBase } from './utils/apiConfig'
 import { getFiltered } from './utils'
@@ -8,6 +8,7 @@ import { Dashboard } from './components/Dashboard'
 import { FileList } from './components/FileList'
 import { FileDetail as FileDetailComponent } from './components/FileDetail'
 import { Chat } from './components/Chat'
+import { Tasks } from './components/Tasks'
 
 export default function App() {
   return (
@@ -15,6 +16,8 @@ export default function App() {
       <Route path="/" element={<Navigate to="/files" replace />} />
       <Route path="/files" element={<FilesShell />} />
       <Route path="/files/:id" element={<FilesShell />} />
+      <Route path="/tasks" element={<TasksShell />} />
+      <Route path="/tasks/:id" element={<TasksShell />} />
       <Route path="*" element={<Navigate to="/files" replace />} />
     </Routes>
   )
@@ -197,9 +200,23 @@ function FilesShell() {
           <h1 style={styles.title}>⚙️ Vertrags-Cockpit</h1>
           <p style={styles.muted}>Vertragsoptimierung & Zukunftsplanung</p>
         </div>
-        <span style={{ ...styles.status, backgroundColor: health === 'ok' ? '#c5f6c5' : '#ffe3e3' }}>
-          Backend: {health}
-        </span>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <button 
+            onClick={() => navigate('/files')} 
+            style={{ ...styles.primaryButton, padding: '0.5rem 1rem' }}
+          >
+            📄 Files
+          </button>
+          <button 
+            onClick={() => navigate('/tasks')} 
+            style={{ ...styles.primaryButton, padding: '0.5rem 1rem' }}
+          >
+            📅 Tasks
+          </button>
+          <span style={{ ...styles.status, backgroundColor: health === 'ok' ? '#c5f6c5' : '#ffe3e3' }}>
+            Backend: {health}
+          </span>
+        </div>
       </header>
 
       <section style={styles.card}>
@@ -228,6 +245,203 @@ function FilesShell() {
           onSelectFile={(id) => navigate(`/files/${id}`)}
           onMarkerFilterChange={setMarkerFilter}
           onOcrFilterChange={setOcrFilter}
+        />
+
+        <FileDetailComponent
+          detail={detail}
+          detailState={detailState}
+          selectedMarkersForDetail={selectedMarkersForDetail}
+          noteDraft={noteDraft}
+          dueDateDraft={dueDateDraft}
+          savingMarkers={savingMarkers}
+          savingNote={savingNote}
+          savingDueDate={savingDueDate}
+          onMarkersChange={setSelectedMarkersForDetail}
+          onNoteDraftChange={setNoteDraft}
+          onDueDateDraftChange={setDueDateDraft}
+          onSaveMarkers={saveMarkers}
+          onSaveNote={saveNote}
+          onSaveDueDate={saveDueDate}
+        />
+
+        <Chat fileId={selectedId} filename={detail?.filename} />
+      </div>
+    </div>
+  )
+}
+
+function TasksShell() {
+  const params = useParams()
+  const navigate = useNavigate()
+  const selectedId = params.id ? Number(params.id) : null
+
+  const [health, setHealth] = useState<'loading' | 'ok' | 'offline'>('loading')
+  const [tasks, setTasks] = useState<FileSummary[]>([])
+  const [listState, setListState] = useState<'idle' | 'loading' | 'error'>('idle')
+  const [detail, setDetail] = useState<FileDetail | null>(null)
+  const [detailState, setDetailState] = useState<'idle' | 'loading' | 'error'>('idle')
+  const [error, setError] = useState<string | null>(null)
+  const [noteDraft, setNoteDraft] = useState<string>('')
+  const [savingNote, setSavingNote] = useState(false)
+  const [dueDateDraft, setDueDateDraft] = useState<string>('')
+  const [savingDueDate, setSavingDueDate] = useState(false)
+  const [selectedMarkersForDetail, setSelectedMarkersForDetail] = useState<string[]>([])
+  const [savingMarkers, setSavingMarkers] = useState(false)
+
+  useEffect(() => {
+    fetch(apiBase + '/api/health')
+      .then(r => r.json())
+      .then(j => setHealth(j.status === 'UP' ? 'ok' : 'offline'))
+      .catch(() => setHealth('offline'))
+  }, [])
+
+  useEffect(() => {
+    refreshTasks()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    if (selectedId != null) {
+      loadDetail(selectedId)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId])
+
+  async function refreshTasks() {
+    setListState('loading')
+    setError(null)
+    try {
+      const res = await fetch(apiBase + '/api/files/tasks')
+      if (!res.ok) throw new Error('Failed to load tasks')
+      const data: FileSummary[] = await res.json()
+      setTasks(data)
+
+      const currentExists = selectedId && data.some(f => f.id === selectedId)
+      if (data.length && (!selectedId || !currentExists)) {
+        navigate(`/tasks/${data[0].id}`, { replace: true })
+      }
+      setListState('idle')
+    } catch (e) {
+      setListState('error')
+      setError((e as Error).message)
+    }
+  }
+
+  async function loadDetail(id: number) {
+    setDetailState('loading')
+    setError(null)
+    try {
+      const res = await fetch(apiBase + `/api/files/${id}`)
+      if (!res.ok) throw new Error('Detail failed')
+      const data: FileDetail = await res.json()
+      setDetail(data)
+      setNoteDraft(data.note || '')
+      setDueDateDraft(data.dueDate ? new Date(data.dueDate).toISOString().split('T')[0] : '')
+      setSelectedMarkersForDetail(data.markers || [])
+      setDetailState('idle')
+    } catch (e) {
+      setDetailState('error')
+      setError((e as Error).message)
+    }
+  }
+
+  async function saveMarkers() {
+    if (!selectedId) return
+    setSavingMarkers(true)
+    try {
+      const res = await fetch(apiBase + `/api/files/${selectedId}/markers`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ markers: selectedMarkersForDetail })
+      })
+      if (!res.ok) throw new Error('Failed to save markers')
+      await refreshTasks()
+      await loadDetail(selectedId)
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setSavingMarkers(false)
+    }
+  }
+
+  async function saveDueDate() {
+    if (!selectedId) return
+    setSavingDueDate(true)
+    try {
+      const body = dueDateDraft
+        ? JSON.stringify({ dueDate: new Date(dueDateDraft).toISOString() })
+        : JSON.stringify({ dueDate: null })
+      const res = await fetch(apiBase + `/api/files/${selectedId}/due-date`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body
+      })
+      if (!res.ok) throw new Error('Failed to save due date')
+      await refreshTasks()
+      await loadDetail(selectedId)
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setSavingDueDate(false)
+    }
+  }
+
+  async function saveNote() {
+    if (!selectedId) return
+    setSavingNote(true)
+    try {
+      const res = await fetch(apiBase + `/api/files/${selectedId}/note`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ note: noteDraft })
+      })
+      if (!res.ok) throw new Error('Failed to save note')
+      await refreshTasks()
+      await loadDetail(selectedId)
+    } catch (e) {
+      setError((e as Error).message)
+    } finally {
+      setSavingNote(false)
+    }
+  }
+
+  return (
+    <div style={styles.page}>
+      <header style={styles.header}>
+        <div>
+          <h1 style={styles.title}>⚙️ Vertrags-Cockpit</h1>
+          <p style={styles.muted}>Vertragsoptimierung & Zukunftsplanung</p>
+        </div>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <button 
+            onClick={() => navigate('/files')} 
+            style={{ ...styles.primaryButton, padding: '0.5rem 1rem' }}
+          >
+            📄 Files
+          </button>
+          <button 
+            onClick={() => navigate('/tasks')} 
+            style={{ ...styles.primaryButton, padding: '0.5rem 1rem' }}
+          >
+            📅 Tasks
+          </button>
+          <span style={{ ...styles.status, backgroundColor: health === 'ok' ? '#c5f6c5' : '#ffe3e3' }}>
+            Backend: {health}
+          </span>
+        </div>
+      </header>
+
+      {error && (
+        <section style={styles.card}>
+          <div style={styles.error}>{error}</div>
+        </section>
+      )}
+
+      <div style={{ ...styles.grid, gridTemplateColumns: '320px 1fr 400px' }}>
+        <Tasks
+          tasks={tasks}
+          selectedId={selectedId}
+          onSelect={(id) => navigate(`/tasks/${id}`)}
         />
 
         <FileDetailComponent

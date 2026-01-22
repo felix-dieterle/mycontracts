@@ -19,9 +19,21 @@ export type OcrInfo = {
   rawJson?: string
 }
 
+export type ContractInfo = {
+  id: number
+  title: string
+}
+
+export type Contract = {
+  id: number
+  title: string
+  createdAt?: string
+}
+
 export type FileDetail = FileSummary & {
   ocr?: OcrInfo | null
   note?: string | null
+  contract?: ContractInfo | null
 }
 
 export type MarkerFilter = 'ALL' | 'NEEDS_ATTENTION' | string

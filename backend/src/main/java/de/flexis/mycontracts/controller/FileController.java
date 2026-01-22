@@ -50,6 +50,15 @@ public class FileController {
                 .toList();
     }
 
+    @GetMapping("/tasks")
+    public java.util.List<FileListItemResponse> listTasks() {
+        var files = storageService.listTasks();
+        var ocrByFile = storageService.findOcrForFileIds(files.stream().map(StoredFile::getId).toList());
+        return files.stream()
+                .map(f -> FileListItemResponse.from(f, ocrByFile.get(f.getId())))
+                .toList();
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<FileDetailResponse> detail(@PathVariable Long id) {
         try {
