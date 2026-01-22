@@ -49,6 +49,8 @@ jobs:
           else
             # This is a branch push - use branch name and short commit SHA
             BRANCH_NAME=${GITHUB_REF#refs/heads/}
+            # Sanitize branch name: replace / with - and remove other special characters
+            BRANCH_NAME=$(echo "$BRANCH_NAME" | sed 's/\//-/g' | sed 's/[^a-zA-Z0-9._-]//g')
             SHORT_SHA=${GITHUB_SHA:0:7}
             VERSION="${BRANCH_NAME}-${SHORT_SHA}"
             echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
