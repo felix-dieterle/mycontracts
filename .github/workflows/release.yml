@@ -97,7 +97,7 @@ jobs:
             mycontracts-frontend-${{ steps.version.outputs.VERSION }}.zip
           retention-days: 30
 
-      - name: Create Release (for tag builds only)
+      - name: Create Release (for tag builds)
         if: steps.version.outputs.IS_TAG == 'true'
         uses: softprops/action-gh-release@v1
         with:
@@ -107,3 +107,16 @@ jobs:
           generate_release_notes: true
           draft: false
           prerelease: ${{ steps.version.outputs.IS_PRERELEASE }}
+
+      - name: Create Release (for branch builds)
+        if: steps.version.outputs.IS_TAG == 'false'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          name: Release ${{ steps.version.outputs.VERSION }}
+          files: |
+            mycontracts-backend-${{ steps.version.outputs.VERSION }}.jar
+            mycontracts-frontend-${{ steps.version.outputs.VERSION }}.zip
+          generate_release_notes: true
+          draft: false
+          prerelease: true
