@@ -1,0 +1,81 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          # Check if this is a pre-release (contains alpha, beta, rc, or starts with 0.x.x)
+          if [[ $VERSION =~ (alpha|beta|rc|pre|dev|snapshot) ]] || [[ $VERSION =~ ^0\. ]]; then
+            echo "IS_PRERELEASE=true" >> $GITHUB_OUTPUT
+          else
+            echo "IS_PRERELEASE=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build backend
+        working-directory: backend
+        run: mvn -B -DskipTests clean package
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Create frontend archive
+        run: |
+          cd frontend/dist
+          zip -r ../../mycontracts-frontend-${{ steps.version.outputs.VERSION }}.zip .
+          cd ../..
+
+      - name: Copy backend JAR with version
+        run: |
+          # Find the JAR file dynamically (there should be only one)
+          JAR_FILE=$(find backend/target -name "*.jar" -type f ! -name "*-sources.jar" ! -name "*-javadoc.jar" | head -n 1)
+          if [ -z "$JAR_FILE" ]; then
+            echo "Error: No JAR file found in backend/target"
+            exit 1
+          fi
+          echo "Found JAR: $JAR_FILE"
+          cp "$JAR_FILE" mycontracts-backend-${{ steps.version.outputs.VERSION }}.jar
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            mycontracts-backend-${{ steps.version.outputs.VERSION }}.jar
+            mycontracts-frontend-${{ steps.version.outputs.VERSION }}.zip
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ steps.version.outputs.IS_PRERELEASE }}
