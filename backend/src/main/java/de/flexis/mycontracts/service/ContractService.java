@@ -48,9 +48,7 @@ public class ContractService {
     public void deleteContract(Long id) {
         Contract contract = getContract(id);
         // Unlink all files from this contract
-        List<StoredFile> linkedFiles = storedFileRepository.findAll().stream()
-                .filter(f -> f.getContract() != null && f.getContract().getId().equals(id))
-                .toList();
+        List<StoredFile> linkedFiles = storedFileRepository.findByContractId(id);
         
         for (StoredFile file : linkedFiles) {
             file.setContract(null);
@@ -78,8 +76,6 @@ public class ContractService {
 
     public List<StoredFile> getFilesForContract(Long contractId) {
         getContract(contractId); // Verify contract exists
-        return storedFileRepository.findAll().stream()
-                .filter(f -> f.getContract() != null && f.getContract().getId().equals(contractId))
-                .toList();
+        return storedFileRepository.findByContractId(contractId);
     }
 }

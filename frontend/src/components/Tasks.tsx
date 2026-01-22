@@ -1,6 +1,6 @@
 import React from 'react'
 import { FileSummary } from '../types'
-import { styles } from '../styles/styles'
+import { styles, markerBadgeStyle, ocrBadgeStyle } from '../styles/styles'
 
 interface TasksProps {
   tasks: FileSummary[]
@@ -35,7 +35,7 @@ export function Tasks({ tasks, selectedId, onSelect }: TasksProps) {
   }
 
   return (
-    <div style={styles.fileList}>
+    <section style={styles.card}>
       <div style={{ ...styles.h2, marginBottom: '1rem' }}>
         📅 Tasks & Reminders
       </div>
@@ -46,60 +46,58 @@ export function Tasks({ tasks, selectedId, onSelect }: TasksProps) {
         </div>
       )}
 
-      {tasks.map(task => {
-        const overdue = isOverdue(task.dueDate)
-        const selected = task.id === selectedId
+      <div style={styles.list}>
+        {tasks.map(task => {
+          const overdue = isOverdue(task.dueDate)
+          const selected = task.id === selectedId
 
-        return (
-          <div
-            key={task.id}
-            onClick={() => onSelect(task.id)}
-            style={{
-              ...styles.fileItem,
-              ...(selected ? styles.fileItemSelected : {}),
-              borderLeft: overdue ? '4px solid #ef4444' : '4px solid #10b981'
-            }}
-          >
-            <div style={{ fontWeight: 500, marginBottom: '0.25rem' }}>
-              {task.filename}
-            </div>
-            
-            <div style={{ fontSize: '0.875rem', color: '#666', marginBottom: '0.5rem' }}>
-              {task.size} bytes · {new Date(task.createdAt).toLocaleDateString()}
-            </div>
-
-            <div style={{ 
-              fontSize: '0.875rem', 
-              color: overdue ? '#ef4444' : '#10b981',
-              fontWeight: 600,
-              marginBottom: '0.5rem'
-            }}>
-              📅 {formatDueDate(task.dueDate)}
-            </div>
-
-            {task.markers && task.markers.length > 0 && (
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
-                {task.markers.map(m => (
-                  <span key={m} style={styles.marker}>
-                    {m}
-                  </span>
-                ))}
+          return (
+            <div
+              key={task.id}
+              onClick={() => onSelect(task.id)}
+              style={{
+                ...styles.listItem,
+                backgroundColor: selected ? '#eff6ff' : '#fff',
+                borderLeft: overdue ? '4px solid #ef4444' : '4px solid #10b981',
+                borderColor: selected ? '#2d6cdf' : (overdue ? '#ef4444' : '#10b981')
+              }}
+            >
+              <div style={styles.listTitle}>
+                {task.filename}
               </div>
-            )}
+              
+              <div style={{ ...styles.listMeta, marginBottom: '0.5rem' }}>
+                {task.size} bytes · {task.createdAt ? new Date(task.createdAt).toLocaleDateString() : 'n/a'}
+              </div>
 
-            {task.ocrStatus && (
-              <span style={{
-                ...styles.marker,
-                backgroundColor: task.ocrStatus === 'MATCHED' ? '#10b981' :
-                                 task.ocrStatus === 'PENDING' ? '#f59e0b' : '#ef4444',
-                color: 'white'
+              <div style={{ 
+                fontSize: '0.875rem', 
+                color: overdue ? '#ef4444' : '#10b981',
+                fontWeight: 600,
+                marginBottom: '0.5rem'
               }}>
-                OCR {task.ocrStatus}
-              </span>
-            )}
-          </div>
-        )
-      })}
-    </div>
+                📅 {formatDueDate(task.dueDate)}
+              </div>
+
+              {task.markers && task.markers.length > 0 && (
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+                  {task.markers.map(m => (
+                    <span key={m} style={{ ...styles.badge, ...markerBadgeStyle(m) }}>
+                      {m}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {task.ocrStatus && (
+                <span style={{ ...styles.badge, ...ocrBadgeStyle(task.ocrStatus) }}>
+                  OCR {task.ocrStatus}
+                </span>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </section>
   )
 }

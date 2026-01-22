@@ -9,4 +9,5 @@ import java.util.List;
 public interface StoredFileRepository extends JpaRepository<StoredFile, Long> {
     StoredFile findByFilename(String filename);
     List<StoredFile> findByDueDateNotNullOrderByDueDateAsc();
+    List<StoredFile> findByContractId(Long contractId);
 }
