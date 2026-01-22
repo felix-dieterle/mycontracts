@@ -1,0 +1,66 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Build backend
+        working-directory: backend
+        run: mvn -B -DskipTests clean package
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Create frontend archive
+        run: |
+          cd frontend/dist
+          zip -r ../../mycontracts-frontend-${{ steps.version.outputs.VERSION }}.zip .
+          cd ../..
+
+      - name: Copy backend JAR with version
+        run: |
+          cp backend/target/mycontracts-0.0.1-SNAPSHOT.jar mycontracts-backend-${{ steps.version.outputs.VERSION }}.jar
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            mycontracts-backend-${{ steps.version.outputs.VERSION }}.jar
+            mycontracts-frontend-${{ steps.version.outputs.VERSION }}.zip
+          generate_release_notes: true
+          draft: false
+          prerelease: false
