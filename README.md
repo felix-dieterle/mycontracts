@@ -30,6 +30,7 @@ Das Vertrags-Cockpit bietet einen **strategischen Überblick** über alle Vertr�
 **Weitere Dokumentation:**
 - [USAGE.md](USAGE.md) – Schritt-für-Schritt Nutzung mit UI- und API-Beispielen
 - [API.md](API.md) – Vollständige REST API Referenz (Marker, Due Dates, Notes)
+- [docs/FREE-TIER-AI-APIS.md](docs/FREE-TIER-AI-APIS.md) – Kostenlose AI APIs und Free Tier Optionen
 
 ## Benutzeroberfläche
 
@@ -201,6 +202,8 @@ Wichtige Umgebungsvariablen (in `.env`):
 ### AI-Unterstützung mit OpenRouter.ai
 
 Das System bietet KI-gestützte Funktionen zur Vertragsanalyse und -optimierung über OpenRouter.ai:
+
+> **💡 Tipp:** Für kostenlose Nutzung und Free Tier Optionen siehe [docs/FREE-TIER-AI-APIS.md](docs/FREE-TIER-AI-APIS.md)
 
 **Features:**
 - 💬 **AI Chat** – Stelle Fragen zu deinen Verträgen im Kontext des gewählten Dokuments
