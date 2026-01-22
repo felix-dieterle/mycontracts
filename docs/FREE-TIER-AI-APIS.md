@@ -83,7 +83,7 @@ Google offers a generous free tier for Gemini API with no credit card required.
 #### Setup
 
 1. **Get API Key**
-   - Visit [Google AI Studio](https://makersuite.google.com/app/apikey)
+   - Visit [Google AI Studio](https://aistudio.google.com/app/apikey)
    - Sign in with Google account
    - Click "Create API Key"
    - Copy your API key
@@ -103,12 +103,14 @@ Google offers a generous free tier for Gemini API with no credit card required.
 
 #### Direct Integration (Advanced)
 
-To use Gemini API directly without OpenRouter, you would need to:
+**Note:** MyContracts currently works with all AI providers through OpenRouter without code changes. Direct integration is only needed if you want to bypass OpenRouter.
+
+To use Gemini API directly without OpenRouter (requires code modification):
 1. Create a new configuration class similar to `OpenRouterConfig.java`
 2. Modify `AiService.java` to support Gemini's API format
 3. Update the WebClient to use `https://generativelanguage.googleapis.com/v1`
 
-Example configuration:
+Example configuration (for reference):
 ```java
 @Configuration
 public class GeminiConfig {
@@ -124,6 +126,8 @@ public class GeminiConfig {
     }
 }
 ```
+
+**Recommendation:** Use OpenRouter instead - it supports Gemini without code changes.
 
 ---
 
@@ -268,10 +272,25 @@ OPENROUTER_MODEL=google/gemini-flash-1.5
 
 ### Approach 3: Self-Hosted (Advanced Users)
 
-For completely free unlimited usage:
-1. Run **Ollama** locally with Llama 3.2 or Mistral
-2. Modify MyContracts to support local API endpoints
-3. Trade API convenience for hardware requirements
+For completely free unlimited usage (requires technical setup):
+
+1. Install **Ollama** locally: https://ollama.ai
+2. Pull a model: `ollama pull llama3.2` or `ollama pull mistral`
+3. Start Ollama server (runs on http://localhost:11434 by default)
+
+**Code changes needed:**
+- Create `OllamaConfig.java` similar to `OpenRouterConfig.java`
+- Configure WebClient to use `http://localhost:11434`
+- Adapt request/response format in `AiService.java`
+
+**Note:** This approach trades API convenience for:
+- ✅ Completely free and unlimited
+- ✅ Full data privacy (no external API calls)
+- ❌ Requires local hardware (CPU/GPU)
+- ❌ Requires code modifications
+- ❌ Slower than cloud APIs (unless you have good GPU)
+
+**Recommendation:** Start with OpenRouter's free models instead - much easier to set up!
 
 ---
 
@@ -333,14 +352,17 @@ Only these features require AI:
 
 ## Testing Your Setup
 
-### 1. Verify Configuration
+### 1. Verify Application Health
 
 ```bash
-# Check if API key is configured
+# Check if backend is running
 curl http://localhost:8080/api/health
+# Expected: {"status":"UP"}
 ```
 
-### 2. Test Chat
+### 2. Test AI Configuration (Chat)
+
+This tests if your AI API key is configured and working:
 
 ```bash
 curl -X POST http://localhost:8080/api/ai/chat \
@@ -351,9 +373,28 @@ curl -X POST http://localhost:8080/api/ai/chat \
   }'
 ```
 
+**Expected response:**
+```json
+{
+  "message": "Hello! How can I help you with your contract?",
+  "role": "assistant",
+  "error": false
+}
+```
+
+**If you get an error**, check:
+- Is `OPENROUTER_API_KEY` set correctly?
+- Did you restart the backend after changing `.env`?
+- Is your API key valid?
+
 ### 3. Test Contract Optimization
 
 ```bash
+# First, upload a file to get a fileId
+curl -X POST http://localhost:8080/api/files/upload \
+  -F "file=@/path/to/your/contract.pdf"
+
+# Then test optimization with the returned fileId
 curl -X POST http://localhost:8080/api/ai/optimize \
   -H "Content-Type: application/json" \
   -d '{"fileId": 1}'
