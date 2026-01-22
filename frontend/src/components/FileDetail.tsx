@@ -106,6 +106,16 @@ export function FileDetail({
             </button>
           </div>
           <div>
+            <div style={styles.label}>Vertrag</div>
+            {!detail.contract && <div style={styles.muted}>Nicht mit einem Vertrag verknüpft.</div>}
+            {detail.contract && (
+              <div>
+                <div style={styles.badge}>{detail.contract.title}</div>
+                <div style={{ ...styles.listMeta, marginTop: '0.5rem' }}>Contract ID: {detail.contract.id}</div>
+              </div>
+            )}
+          </div>
+          <div>
             <a href={`${apiBase}/api/files/${detail.id}/download`} style={styles.link}>Download</a>
           </div>
           <div>

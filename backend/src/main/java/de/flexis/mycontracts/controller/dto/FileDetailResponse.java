@@ -17,7 +17,8 @@ public record FileDetailResponse(
         Instant dueDate,
         String note,
         Instant createdAt,
-        OcrInfo ocr
+        OcrInfo ocr,
+        ContractInfo contract
 ) {
     public static FileDetailResponse from(StoredFile file, OcrFile ocrFile) {
         List<String> markers = file.getMarkersJson() != null && !file.getMarkersJson().isBlank()
@@ -31,6 +32,10 @@ public record FileDetailResponse(
                 ocrFile.getRetryCount(),
                 ocrFile.getRawJson()
         );
+        ContractInfo contract = file.getContract() == null ? null : new ContractInfo(
+                file.getContract().getId(),
+                file.getContract().getTitle()
+        );
         return new FileDetailResponse(
                 file.getId(),
                 file.getFilename(),
@@ -41,7 +46,8 @@ public record FileDetailResponse(
                 file.getDueDate(),
                 file.getNote(),
                 file.getCreatedAt(),
-                ocr
+                ocr,
+                contract
         );
     }
 
@@ -52,5 +58,10 @@ public record FileDetailResponse(
             Instant processedAt,
             Integer retryCount,
             String rawJson
+    ) {}
+
+    public record ContractInfo(
+            Long id,
+            String title
     ) {}
 }
