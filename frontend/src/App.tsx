@@ -168,6 +168,29 @@ function FilesShell() {
     }
   }
 
+  async function deleteFile() {
+    if (!selectedId) return
+    setError(null)
+    try {
+      const res = await fetch(apiBase + `/api/files/${selectedId}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Delete failed')
+      await refreshList()
+      // Navigate to first file or files list
+      if (files.length > 1) {
+        const remaining = files.filter(f => f.id !== selectedId)
+        if (remaining.length > 0) {
+          navigate(`/files/${remaining[0].id}`)
+        } else {
+          navigate('/files')
+        }
+      } else {
+        navigate('/files')
+      }
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }
+
   async function handleUpload(ev: React.FormEvent<HTMLFormElement>) {
     ev.preventDefault()
     const input = ev.currentTarget.elements.namedItem('file') as HTMLInputElement
@@ -262,6 +285,7 @@ function FilesShell() {
           onSaveMarkers={saveMarkers}
           onSaveNote={saveNote}
           onSaveDueDate={saveDueDate}
+          onDelete={deleteFile}
         />
 
         <Chat fileId={selectedId} filename={detail?.filename} />

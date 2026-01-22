@@ -136,6 +136,45 @@ public class FileStorageService {
         return storedFileRepository.save(file);
     }
 
+    public void delete(Long id) {
+        StoredFile file = storedFileRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("File not found"));
+        
+        // Delete file from filesystem
+        Path filePath = Path.of(file.getPath());
+        try {
+            Files.deleteIfExists(filePath);
+        } catch (IOException e) {
+            // Log but continue with DB deletion
+            System.err.println("Failed to delete file from filesystem: " + e.getMessage());
+        }
+        
+        // Delete from database (cascade will handle related OCR files)
+        storedFileRepository.delete(file);
+    }
+
+    public List<StoredFile> bulkUpdateMarkers(List<Long> fileIds, List<String> markers) {
+        List<StoredFile> files = storedFileRepository.findAllById(fileIds);
+        String markersJson = markers != null && !markers.isEmpty() 
+                ? String.join(",", markers) 
+                : "";
+        
+        files.forEach(file -> file.setMarkersJson(markersJson));
+        return storedFileRepository.saveAll(files);
+    }
+
+    public List<StoredFile> bulkUpdateDueDate(List<Long> fileIds, Instant dueDate) {
+        List<StoredFile> files = storedFileRepository.findAllById(fileIds);
+        files.forEach(file -> file.setDueDate(dueDate));
+        return storedFileRepository.saveAll(files);
+    }
+
+    public List<StoredFile> bulkUpdateNote(List<Long> fileIds, String note) {
+        List<StoredFile> files = storedFileRepository.findAllById(fileIds);
+        files.forEach(file -> file.setNote(note));
+        return storedFileRepository.saveAll(files);
+    }
+
     private String checksum(Path file) throws IOException {
         try (InputStream in = Files.newInputStream(file)) {
             MessageDigest md = MessageDigest.getInstance("SHA-256");

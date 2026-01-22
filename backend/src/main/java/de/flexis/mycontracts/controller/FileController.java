@@ -15,6 +15,9 @@ import de.flexis.mycontracts.controller.dto.UpdateMarkerRequest;
 import de.flexis.mycontracts.controller.dto.UpdateMarkersRequest;
 import de.flexis.mycontracts.controller.dto.UpdateDueDateRequest;
 import de.flexis.mycontracts.controller.dto.UpdateNoteRequest;
+import de.flexis.mycontracts.controller.dto.BulkUpdateMarkersRequest;
+import de.flexis.mycontracts.controller.dto.BulkUpdateDueDateRequest;
+import de.flexis.mycontracts.controller.dto.BulkUpdateNoteRequest;
 import de.flexis.mycontracts.model.OcrFile;
 
 import java.net.MalformedURLException;
@@ -118,5 +121,45 @@ public class FileController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + p.getFileName() + "\"")
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(resource);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        try {
+            storageService.delete(id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PatchMapping("/bulk/markers")
+    public ResponseEntity<java.util.List<StoredFile>> bulkUpdateMarkers(@RequestBody BulkUpdateMarkersRequest request) {
+        try {
+            java.util.List<StoredFile> updated = storageService.bulkUpdateMarkers(request.fileIds(), request.markers());
+            return ResponseEntity.ok(updated);
+        } catch (Exception ex) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PatchMapping("/bulk/due-date")
+    public ResponseEntity<java.util.List<StoredFile>> bulkUpdateDueDate(@RequestBody BulkUpdateDueDateRequest request) {
+        try {
+            java.util.List<StoredFile> updated = storageService.bulkUpdateDueDate(request.fileIds(), request.dueDate());
+            return ResponseEntity.ok(updated);
+        } catch (Exception ex) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PatchMapping("/bulk/note")
+    public ResponseEntity<java.util.List<StoredFile>> bulkUpdateNote(@RequestBody BulkUpdateNoteRequest request) {
+        try {
+            java.util.List<StoredFile> updated = storageService.bulkUpdateNote(request.fileIds(), request.note());
+            return ResponseEntity.ok(updated);
+        } catch (Exception ex) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 }
