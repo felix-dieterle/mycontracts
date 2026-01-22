@@ -4,11 +4,15 @@ import de.flexis.mycontracts.model.StoredFile;
 import de.flexis.mycontracts.repository.StoredFileRepository;
 import de.flexis.mycontracts.repository.OcrFileRepository;
 import de.flexis.mycontracts.model.OcrFile;
+import de.flexis.mycontracts.controller.dto.WidgetStatusResponse;
+import de.flexis.mycontracts.model.enums.OcrStatus;
 import java.util.Optional;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.time.Instant;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Arrays;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -157,5 +161,139 @@ public class FileStorageService {
         filename = Path.of(filename).getFileName().toString();
 
         return filename;
+    }
+
+    /**
+     * Calculate widget status for Android widget display.
+     * Provides a snapshot of savegame metrics and metadata.
+     */
+    public WidgetStatusResponse getWidgetStatus() {
+        List<StoredFile> allFiles = storedFileRepository.findAll();
+        Map<Long, OcrFile> ocrByFile = findOcrForFileIds(
+            allFiles.stream().map(StoredFile::getId).toList()
+        );
+
+        Instant now = Instant.now();
+        Instant in30Days = now.plusSeconds(30L * 24 * 60 * 60);
+
+        // Calculate metrics
+        int totalFiles = allFiles.size();
+        int overdueCount = 0;
+        int urgentCount = 0;
+        int needsAttentionCount = 0;
+        int upcomingDueDates = 0;
+        int ocrPending = 0;
+        int ocrFailed = 0;
+        int ocrMatched = 0;
+        int missingInfo = 0;
+        int needsCategorization = 0;
+
+        for (StoredFile file : allFiles) {
+            List<String> markers = parseMarkers(file.getMarkersJson());
+            OcrFile ocr = ocrByFile.get(file.getId());
+            
+            // Check overdue
+            if (file.getDueDate() != null && file.getDueDate().isBefore(now)) {
+                overdueCount++;
+            }
+            
+            // Check markers
+            if (markers.contains("URGENT")) {
+                urgentCount++;
+            }
+            if (markers.contains("MISSING_INFO")) {
+                missingInfo++;
+            }
+            
+            // Check needs attention
+            if (markers.contains("URGENT") || markers.contains("REVIEW") || 
+                markers.contains("MISSING_INFO") || 
+                (file.getDueDate() != null && file.getDueDate().isBefore(now))) {
+                needsAttentionCount++;
+            }
+            
+            // Check upcoming due dates
+            if (file.getDueDate() != null && file.getDueDate().isBefore(in30Days)) {
+                upcomingDueDates++;
+            }
+            
+            // Check OCR status
+            if (ocr != null) {
+                if (ocr.getStatus() == OcrStatus.PENDING) {
+                    ocrPending++;
+                } else if (ocr.getStatus() == OcrStatus.FAILED) {
+                    ocrFailed++;
+                } else if (ocr.getStatus() == OcrStatus.MATCHED) {
+                    ocrMatched++;
+                }
+            }
+            
+            // Check needs categorization
+            if (markers.isEmpty() && file.getDueDate() == null && 
+                (file.getNote() == null || file.getNote().isBlank())) {
+                needsCategorization++;
+            }
+        }
+
+        // Get recent files (last 5)
+        List<WidgetStatusResponse.RecentFile> recentFiles = allFiles.stream()
+            .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
+            .limit(5)
+            .map(f -> {
+                OcrFile ocr = ocrByFile.get(f.getId());
+                return new WidgetStatusResponse.RecentFile(
+                    f.getId(),
+                    f.getFilename(),
+                    f.getCreatedAt(),
+                    parseMarkers(f.getMarkersJson()),
+                    ocr != null ? ocr.getStatus().name() : null,
+                    f.getDueDate()
+                );
+            })
+            .toList();
+
+        // Build recommendations
+        List<String> recommendations = new ArrayList<>();
+        if (overdueCount > 0) {
+            recommendations.add(String.format("🔴 %d überfällige Verträge prüfen", overdueCount));
+        }
+        if (missingInfo > 0) {
+            recommendations.add(String.format("🟣 %d Verträge mit unvollständigen Informationen vervollständigen", missingInfo));
+        }
+        if (ocrFailed > 0 || ocrPending > 0) {
+            recommendations.add(String.format("🔍 %d OCR-Prozesse überprüfen", ocrFailed + ocrPending));
+        }
+        if (needsCategorization > 0) {
+            recommendations.add(String.format("📝 %d Verträge kategorisieren und Fälligkeiten setzen", needsCategorization));
+        }
+        if (overdueCount == 0 && urgentCount == 0) {
+            recommendations.add("✅ Alle kritischen Punkte sind bearbeitet");
+        }
+
+        return new WidgetStatusResponse(
+            Instant.now(),
+            totalFiles,
+            needsAttentionCount,
+            overdueCount,
+            urgentCount,
+            upcomingDueDates,
+            ocrPending,
+            ocrFailed,
+            ocrMatched,
+            missingInfo,
+            needsCategorization,
+            recentFiles,
+            recommendations
+        );
+    }
+
+    private List<String> parseMarkers(String markersJson) {
+        if (markersJson == null || markersJson.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(markersJson.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
     }
 }
