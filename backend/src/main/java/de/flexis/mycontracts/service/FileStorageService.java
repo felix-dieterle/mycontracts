@@ -291,6 +291,9 @@ public class FileStorageService {
         if (markersJson == null || markersJson.isBlank()) {
             return List.of();
         }
-        return Arrays.asList(markersJson.split(","));
+        return Arrays.stream(markersJson.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .toList();
     }
 }

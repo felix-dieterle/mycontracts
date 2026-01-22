@@ -112,13 +112,14 @@ public class WidgetControllerIntegrationTest {
 
     @Test
     void getWidgetStatus_recentFilesLimit() throws Exception {
-        // Create 10 files
+        // Create 10 files with explicit timestamps to ensure ordering
+        Instant baseTime = Instant.now().minusSeconds(1000);
         for (int i = 0; i < 10; i++) {
             StoredFile file = new StoredFile("file" + i + ".pdf", tempDir.resolve("file" + i + ".pdf").toString());
             file.setSize(1000L);
             file.setChecksum("checksum" + i);
+            file.setCreatedAt(baseTime.plusSeconds(i)); // Explicit timestamps
             fileRepository.save(file);
-            Thread.sleep(10); // Ensure different creation times
         }
 
         MvcResult result = mvc.perform(get("/api/widget/status"))
