@@ -29,8 +29,8 @@ export function Tasks({ tasks, selectedId, onSelect }: TasksProps) {
   const isThisMonth = (dueDate: string | null) => {
     if (!dueDate) return false
     const date = new Date(dueDate)
-    const monthFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000)
-    return date >= now && date <= monthFromNow
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+    return date >= now && date <= monthEnd
   }
 
   const getFilteredTasks = () => {

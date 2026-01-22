@@ -136,30 +136,39 @@ public class FileController {
     @PatchMapping("/bulk/markers")
     public ResponseEntity<java.util.List<StoredFile>> bulkUpdateMarkers(@RequestBody BulkUpdateMarkersRequest request) {
         try {
+            if (request.fileIds() == null || request.fileIds().isEmpty()) {
+                return ResponseEntity.badRequest().build();
+            }
             java.util.List<StoredFile> updated = storageService.bulkUpdateMarkers(request.fileIds(), request.markers());
             return ResponseEntity.ok(updated);
-        } catch (Exception ex) {
-            return ResponseEntity.badRequest().build();
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.notFound().build();
         }
     }
 
     @PatchMapping("/bulk/due-date")
     public ResponseEntity<java.util.List<StoredFile>> bulkUpdateDueDate(@RequestBody BulkUpdateDueDateRequest request) {
         try {
+            if (request.fileIds() == null || request.fileIds().isEmpty()) {
+                return ResponseEntity.badRequest().build();
+            }
             java.util.List<StoredFile> updated = storageService.bulkUpdateDueDate(request.fileIds(), request.dueDate());
             return ResponseEntity.ok(updated);
-        } catch (Exception ex) {
-            return ResponseEntity.badRequest().build();
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.notFound().build();
         }
     }
 
     @PatchMapping("/bulk/note")
     public ResponseEntity<java.util.List<StoredFile>> bulkUpdateNote(@RequestBody BulkUpdateNoteRequest request) {
         try {
+            if (request.fileIds() == null || request.fileIds().isEmpty()) {
+                return ResponseEntity.badRequest().build();
+            }
             java.util.List<StoredFile> updated = storageService.bulkUpdateNote(request.fileIds(), request.note());
             return ResponseEntity.ok(updated);
-        } catch (Exception ex) {
-            return ResponseEntity.badRequest().build();
+        } catch (IllegalArgumentException ex) {
+            return ResponseEntity.notFound().build();
         }
     }
 }

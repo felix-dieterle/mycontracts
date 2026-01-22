@@ -145,8 +145,8 @@ public class FileStorageService {
         try {
             Files.deleteIfExists(filePath);
         } catch (IOException e) {
-            // Log but continue with DB deletion
-            System.err.println("Failed to delete file from filesystem: " + e.getMessage());
+            // Continue with DB deletion even if file deletion fails
+            // This handles cases where the file was already deleted externally
         }
         
         // Delete from database (cascade will handle related OCR files)
