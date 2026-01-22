@@ -54,10 +54,10 @@ MyContracts uses AI for:
 | `meta-llama/llama-3.2-3b-instruct:free` | **FREE** | Chat, basic analysis |
 | `google/gemini-flash-1.5` | $0.075 / $0.30 | General purpose |
 | `openai/gpt-3.5-turbo` | $0.50 / $1.50 | Contract analysis |
-| `anthropic/claude-3-haiku` | $0.25 / $1.25 | Fast responses |
+| `anthropic/claude-3-5-haiku` | $0.25 / $1.25 | Fast responses |
 | `mistralai/mistral-7b-instruct:free` | **FREE** | Lightweight tasks |
 
-**Note:** Input/Output costs are listed. FREE models have no cost but may have rate limits.
+**Note:** Input/Output costs are listed. FREE models have no token cost but rate limits apply.
 
 #### Cost Estimation
 
@@ -193,11 +193,11 @@ Claude offers high-quality responses with a free trial.
 3. **Configure via OpenRouter**
    ```bash
    OPENROUTER_API_KEY=sk-or-v1-...
-   OPENROUTER_MODEL=anthropic/claude-3-haiku
+   OPENROUTER_MODEL=anthropic/claude-3-5-haiku
    ```
 
 #### Cost After Free Credits
-- Claude 3 Haiku: $0.25/$1.25 per 1M tokens (best value)
+- Claude 3.5 Haiku: $0.25/$1.25 per 1M tokens (best value)
 - Claude 3.5 Sonnet: $3/$15 per 1M tokens (highest quality)
 
 ---
@@ -284,11 +284,12 @@ For completely free unlimited usage (requires technical setup):
 - Adapt request/response format in `AiService.java`
 
 **Note:** This approach trades API convenience for:
-- ✅ Completely free and unlimited
+- ✅ Completely free with no token costs
 - ✅ Full data privacy (no external API calls)
 - ❌ Requires local hardware (CPU/GPU)
 - ❌ Requires code modifications
 - ❌ Slower than cloud APIs (unless you have good GPU)
+- ❌ You manage updates and maintenance
 
 **Recommendation:** Start with OpenRouter's free models instead - much easier to set up!
 
@@ -495,7 +496,7 @@ OPENROUTER_MODEL=openai/gpt-3.5-turbo
 
 ### Q: Can I use MyContracts completely free forever?
 
-**A:** Yes! Use `meta-llama/llama-3.2-3b-instruct:free` via OpenRouter (no cost, rate-limited) or run without AI (all core features work).
+**A:** Yes, with some limitations! Use free models like `meta-llama/llama-3.2-3b-instruct:free` via OpenRouter (rate-limited but no token cost), or run without AI (all core features work). Note that free tier availability may change over time as providers update their offerings.
 
 ### Q: What's the cheapest option for production use?
 
