@@ -94,6 +94,10 @@ public class FileStorageService {
         return storedFileRepository.findAll();
     }
 
+    public java.util.List<StoredFile> listTasks() {
+        return storedFileRepository.findByDueDateNotNullOrderByDueDateAsc();
+    }
+
     public StoredFile updateMarker(Long id, String markerValue) {
         StoredFile file = storedFileRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("File not found"));
