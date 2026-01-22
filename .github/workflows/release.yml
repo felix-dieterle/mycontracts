@@ -4,6 +4,9 @@ on:
   push:
     tags:
       - 'v*'
+    branches:
+      - main
+      - development
 
 permissions:
   contents: write
@@ -29,15 +32,29 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Extract version from tag
+      - name: Extract version from tag or branch
         id: version
         run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
-          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          # Check if this is a pre-release (contains alpha, beta, rc, or starts with 0.x.x)
-          if [[ $VERSION =~ (alpha|beta|rc|pre|dev|snapshot) ]] || [[ $VERSION =~ ^0\. ]]; then
-            echo "IS_PRERELEASE=true" >> $GITHUB_OUTPUT
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            # This is a tag push
+            VERSION=${GITHUB_REF#refs/tags/v}
+            echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+            echo "IS_TAG=true" >> $GITHUB_OUTPUT
+            # Check if this is a pre-release (contains alpha, beta, rc, or starts with 0.x.x)
+            if [[ $VERSION =~ (alpha|beta|rc|pre|dev|snapshot) ]] || [[ $VERSION =~ ^0\. ]]; then
+              echo "IS_PRERELEASE=true" >> $GITHUB_OUTPUT
+            else
+              echo "IS_PRERELEASE=false" >> $GITHUB_OUTPUT
+            fi
           else
+            # This is a branch push - use branch name and short commit SHA
+            BRANCH_NAME=${GITHUB_REF#refs/heads/}
+            # Sanitize branch name: replace / with - and remove other special characters
+            BRANCH_NAME=$(echo "$BRANCH_NAME" | sed 's/\//-/g' | sed 's/[^a-zA-Z0-9._-]//g')
+            SHORT_SHA=${GITHUB_SHA:0:7}
+            VERSION="${BRANCH_NAME}-${SHORT_SHA}"
+            echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+            echo "IS_TAG=false" >> $GITHUB_OUTPUT
             echo "IS_PRERELEASE=false" >> $GITHUB_OUTPUT
           fi
 
@@ -70,7 +87,18 @@ jobs:
           echo "Found JAR: $JAR_FILE"
           cp "$JAR_FILE" mycontracts-backend-${{ steps.version.outputs.VERSION }}.jar
 
-      - name: Create Release
+      - name: Upload artifacts (for branch builds)
+        if: steps.version.outputs.IS_TAG == 'false'
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts-${{ steps.version.outputs.VERSION }}
+          path: |
+            mycontracts-backend-${{ steps.version.outputs.VERSION }}.jar
+            mycontracts-frontend-${{ steps.version.outputs.VERSION }}.zip
+          retention-days: 30
+
+      - name: Create Release (for tag builds only)
+        if: steps.version.outputs.IS_TAG == 'true'
         uses: softprops/action-gh-release@v1
         with:
           files: |

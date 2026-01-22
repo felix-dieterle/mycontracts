@@ -17,9 +17,28 @@ All tests must pass before code can be merged.
 
 ## Release Workflow
 
-The release workflow creates downloadable artifacts when you create a git tag.
+The release workflow creates downloadable artifacts in two scenarios:
 
-### Creating a Release
+### 1. Automatic Artifacts on Branch Merges
+
+When code is merged to `main` or `development` branches, the workflow automatically:
+- Builds the backend JAR file
+- Builds the frontend distribution
+- Uploads artifacts to GitHub Actions (available for 30 days):
+  - `mycontracts-backend-<branch>-<commit>.jar` - Backend executable JAR
+  - `mycontracts-frontend-<branch>-<commit>.zip` - Frontend static files
+
+**To download branch artifacts:**
+1. Go to the [Actions tab](https://github.com/felix-dieterle/mycontracts/actions)
+2. Click on the latest workflow run for your branch
+3. Scroll down to the "Artifacts" section
+4. Download the artifacts you need
+
+### 2. Tagged Releases
+
+When you create a git tag, the workflow creates a permanent GitHub Release.
+
+### Creating a Tagged Release
 
 1. **Create and push a version tag:**
    ```bash
