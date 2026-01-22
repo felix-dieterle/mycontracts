@@ -2,6 +2,9 @@
 
 This guide documents how to run MyContracts with free tier AI APIs. The application is designed to work with various AI providers through OpenRouter, but also supports direct API integration.
 
+> **⚠️ Important Disclaimer:**  
+> Free tier limits, pricing, and model availability can change without notice as AI providers update their offerings. The information in this guide was accurate as of January 2024, but you should verify current limits and pricing on each provider's official documentation before relying on them for production use.
+
 ## Overview
 
 MyContracts uses AI for:
@@ -79,6 +82,8 @@ Google offers a generous free tier for Gemini API with no credit card required.
 - ✅ **1,500 requests per day** (RPD)
 - ✅ **1 million tokens per month** free
 - ✅ No credit card required
+
+> **Note:** These limits are subject to change. Check [Google's current pricing](https://ai.google.dev/pricing) for up-to-date information.
 
 #### Setup
 
@@ -207,9 +212,11 @@ Claude offers high-quality responses with a free trial.
 Perplexity offers AI with internet access, great for web search features.
 
 #### Free Tier
-- ✅ **Limited free requests** (exact limits vary)
+- ✅ Limited free requests per day (exact limits may vary by model and account type)
 - ✅ Internet-connected models for web search
-- ❌ May require account
+- ⚠️ Check [Perplexity's documentation](https://docs.perplexity.ai/) for current free tier details
+
+> **Note:** Perplexity's free tier is more limited than OpenRouter's free models. For web search features, consider using OpenRouter with Perplexity models and OpenRouter's free credits.
 
 #### Setup via OpenRouter
 ```bash
