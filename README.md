@@ -25,6 +25,7 @@ Das Vertrags-Cockpit bietet einen **strategischen Überblick** über alle Vertr�
 ✅ **Notizen** – Kurze Vermerke zu Reviews, Risiken, TODOs  
 ✅ **Smart Filtering** – "Needs Attention" findet dringende/überfällige Verträge  
 ✅ **Rest API** – Volle CRUD-Operationen auf Dateien und Metadaten  
+✅ **Widget API** – Endpoint für Android Widgets mit Savegame-Metriken und Metadaten  
 ✅ **Micrometer Metrics** – Prometheus-kompatible Health & Metrics Endpoints  
 
 **Weitere Dokumentation:**

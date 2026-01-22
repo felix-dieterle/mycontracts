@@ -12,6 +12,88 @@ Currently **no authentication** required (MVP stage).
 
 ---
 
+## Widget API
+
+### Get widget status
+
+Get a snapshot of savegame metrics and metadata for Android widget display.
+
+```http
+GET /api/widget/status
+```
+
+**Parameters:** None
+
+**Response (200 OK):**
+```json
+{
+  "timestamp": "2026-01-22T15:33:42.415Z",
+  "totalFiles": 3,
+  "needsAttention": 2,
+  "overdueCount": 1,
+  "urgentCount": 1,
+  "upcomingDueDates30Days": 2,
+  "ocrPending": 0,
+  "ocrFailed": 0,
+  "ocrMatched": 0,
+  "missingInfo": 1,
+  "needsCategorization": 1,
+  "recentFiles": [
+    {
+      "id": 3,
+      "filename": "contract3.pdf",
+      "createdAt": "2026-01-22T15:33:38.199Z",
+      "markers": [],
+      "ocrStatus": null,
+      "dueDate": null
+    },
+    {
+      "id": 2,
+      "filename": "contract2.pdf",
+      "createdAt": "2026-01-22T15:33:38.182Z",
+      "markers": ["MISSING_INFO"],
+      "ocrStatus": null,
+      "dueDate": "2026-02-15T00:00:00Z"
+    },
+    {
+      "id": 1,
+      "filename": "test_contract.pdf",
+      "createdAt": "2026-01-22T15:33:13.885Z",
+      "markers": ["URGENT", "REVIEW"],
+      "ocrStatus": null,
+      "dueDate": "2026-01-20T00:00:00Z"
+    }
+  ],
+  "recommendations": [
+    "🔴 1 überfällige Verträge prüfen",
+    "🟣 1 Verträge mit unvollständigen Informationen vervollständigen",
+    "📝 1 Verträge kategorisieren und Fälligkeiten setzen"
+  ]
+}
+```
+
+**Response fields:**
+- `timestamp` – Time when this snapshot was generated
+- `totalFiles` – Total number of files/contracts in the system
+- `needsAttention` – Files with URGENT/REVIEW/MISSING_INFO markers or overdue
+- `overdueCount` – Files with due date in the past
+- `urgentCount` – Files marked as URGENT
+- `upcomingDueDates30Days` – Files with due date within next 30 days
+- `ocrPending` – Files with OCR status PENDING
+- `ocrFailed` – Files with OCR status FAILED
+- `ocrMatched` – Files with OCR status MATCHED
+- `missingInfo` – Files marked with MISSING_INFO
+- `needsCategorization` – Files without markers, due date, or notes
+- `recentFiles` – List of up to 5 most recently created files
+- `recommendations` – List of actionable recommendations based on current state
+
+**Use case:**
+This endpoint is designed for Android widgets or mobile apps to quickly retrieve
+the current state of all contracts without needing to fetch and process the full
+list. It provides pre-calculated metrics and recommendations for display.
+
+---
+
 ## Files API
 
 ### List all files
