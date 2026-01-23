@@ -111,10 +111,8 @@ jobs:
             
             - **Backend (JAR)**: `mycontracts-backend-${{ steps.version.outputs.VERSION }}.jar`
             - **Frontend (ZIP)**: `mycontracts-frontend-${{ steps.version.outputs.VERSION }}.zip`
-            
-            ---
-            
-            ${{ github.event.head_commit.message }}
+          generate_release_notes: true
+          append_body: true
           draft: false
           prerelease: ${{ steps.version.outputs.IS_PRERELEASE }}
 
@@ -134,9 +132,7 @@ jobs:
             
             - **Backend (JAR)**: `mycontracts-backend-${{ steps.version.outputs.VERSION }}.jar`
             - **Frontend (ZIP)**: `mycontracts-frontend-${{ steps.version.outputs.VERSION }}.zip`
-            
-            ---
-            
-            ${{ github.event.head_commit.message }}
+          generate_release_notes: true
+          append_body: true
           draft: false
           prerelease: true
