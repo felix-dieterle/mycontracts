@@ -63,13 +63,24 @@ echo
 
 # Prüfe Port
 echo -e "${YELLOW}[3/4]${NC} Prüfe Port ${PORT}..."
-if lsof -Pi :${PORT} -sTCP:LISTEN -t >/dev/null 2>&1 ; then
-    echo -e "${RED}WARNING: Port ${PORT} ist bereits belegt!${NC}"
-    echo "Du kannst einen anderen Port nutzen:"
-    echo "  PORT=9000 $0"
-    exit 1
+if command -v lsof &> /dev/null; then
+    if lsof -Pi :${PORT} -sTCP:LISTEN -t >/dev/null 2>&1 ; then
+        echo -e "${RED}WARNING: Port ${PORT} ist bereits belegt!${NC}"
+        echo "Du kannst einen anderen Port nutzen:"
+        echo "  PORT=9000 $0"
+        exit 1
+    fi
+elif command -v netstat &> /dev/null; then
+    if netstat -tuln 2>/dev/null | grep ":${PORT} " | grep LISTEN >/dev/null 2>&1 ; then
+        echo -e "${RED}WARNING: Port ${PORT} ist bereits belegt!${NC}"
+        echo "Du kannst einen anderen Port nutzen:"
+        echo "  PORT=9000 $0"
+        exit 1
+    fi
+else
+    echo -e "${YELLOW}Hinweis: Port-Check übersprungen (lsof/netstat nicht verfügbar)${NC}"
 fi
-echo -e "${GREEN}✓${NC} Port ${PORT} ist verfügbar"
+echo -e "${GREEN}✓${NC} Port Check abgeschlossen"
 echo
 
 # Optional: Environment-Variablen setzen (kommentiert, da Defaults gut sind)

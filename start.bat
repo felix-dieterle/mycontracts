@@ -95,6 +95,6 @@ echo ==========================================
 echo.
 
 REM Starte JAR
-java -jar "%JAR_PATH%" --server.port=%PORT% 2>&1 | tee %LOG_FILE%
+java -jar "%JAR_PATH%" --server.port=%PORT% > %LOG_FILE% 2>&1
 
 endlocal
