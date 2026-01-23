@@ -104,7 +104,17 @@ jobs:
           files: |
             mycontracts-backend-${{ steps.version.outputs.VERSION }}.jar
             mycontracts-frontend-${{ steps.version.outputs.VERSION }}.zip
-          generate_release_notes: true
+          body: |
+            ## 📦 Downloads
+            
+            This release includes the following artifacts:
+            
+            - **Backend (JAR)**: `mycontracts-backend-${{ steps.version.outputs.VERSION }}.jar`
+            - **Frontend (ZIP)**: `mycontracts-frontend-${{ steps.version.outputs.VERSION }}.zip`
+            
+            ---
+            
+            ${{ github.event.head_commit.message }}
           draft: false
           prerelease: ${{ steps.version.outputs.IS_PRERELEASE }}
 
@@ -117,6 +127,16 @@ jobs:
           files: |
             mycontracts-backend-${{ steps.version.outputs.VERSION }}.jar
             mycontracts-frontend-${{ steps.version.outputs.VERSION }}.zip
-          generate_release_notes: true
+          body: |
+            ## 📦 Downloads
+            
+            This release includes the following artifacts:
+            
+            - **Backend (JAR)**: `mycontracts-backend-${{ steps.version.outputs.VERSION }}.jar`
+            - **Frontend (ZIP)**: `mycontracts-frontend-${{ steps.version.outputs.VERSION }}.zip`
+            
+            ---
+            
+            ${{ github.event.head_commit.message }}
           draft: false
           prerelease: true
