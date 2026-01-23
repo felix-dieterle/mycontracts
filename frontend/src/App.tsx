@@ -43,6 +43,7 @@ function FilesShell() {
   const [savingDueDate, setSavingDueDate] = useState(false)
   const [selectedMarkersForDetail, setSelectedMarkersForDetail] = useState<string[]>([])
   const [savingMarkers, setSavingMarkers] = useState(false)
+  const [bulkSelection, setBulkSelection] = useState<number[]>([])
 
   useEffect(() => {
     fetch(apiBase + '/api/health')
@@ -168,6 +169,71 @@ function FilesShell() {
     }
   }
 
+  async function deleteFile() {
+    if (!selectedId) return
+    setError(null)
+    try {
+      const res = await fetch(apiBase + `/api/files/${selectedId}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Delete failed')
+      await refreshList()
+      // Navigate to first file or files list
+      if (files.length > 1) {
+        const remaining = files.filter(f => f.id !== selectedId)
+        if (remaining.length > 0) {
+          navigate(`/files/${remaining[0].id}`)
+        } else {
+          navigate('/files')
+        }
+      } else {
+        navigate('/files')
+      }
+    } catch (e) {
+      setError((e as Error).message)
+    }
+  }
+
+  async function handleBulkAction(action: 'markers' | 'dueDate' | 'note') {
+    if (bulkSelection.length === 0) return
+    
+    if (action === 'markers') {
+      const markers = window.prompt('Enter markers (comma-separated): URGENT,REVIEW,MISSING_INFO,INCOMPLETE_OCR,FOLLOW_UP')
+      if (markers === null) return
+      const markerList = markers.split(',').map(m => m.trim()).filter(m => m)
+      
+      setError(null)
+      try {
+        const res = await fetch(apiBase + '/api/files/bulk/markers', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileIds: bulkSelection, markers: markerList })
+        })
+        if (!res.ok) throw new Error('Bulk markers update failed')
+        await refreshList()
+        setBulkSelection([])
+      } catch (e) {
+        setError((e as Error).message)
+      }
+    } else if (action === 'dueDate') {
+      const dateStr = window.prompt('Enter due date (YYYY-MM-DD):')
+      if (dateStr === null) return
+      const dueDate = dateStr ? new Date(dateStr + 'T00:00:00Z').toISOString() : null
+      
+      setError(null)
+      try {
+        const res = await fetch(apiBase + '/api/files/bulk/due-date', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileIds: bulkSelection, dueDate })
+        })
+        if (!res.ok) throw new Error('Bulk due date update failed')
+        await refreshList()
+        setBulkSelection([])
+      } catch (e) {
+        setError((e as Error).message)
+      }
+    }
+  }
+
   async function handleUpload(ev: React.FormEvent<HTMLFormElement>) {
     ev.preventDefault()
     const input = ev.currentTarget.elements.namedItem('file') as HTMLInputElement
@@ -245,6 +311,9 @@ function FilesShell() {
           onSelectFile={(id) => navigate(`/files/${id}`)}
           onMarkerFilterChange={setMarkerFilter}
           onOcrFilterChange={setOcrFilter}
+          bulkSelection={bulkSelection}
+          onBulkSelectionChange={setBulkSelection}
+          onBulkAction={handleBulkAction}
         />
 
         <FileDetailComponent
@@ -262,6 +331,7 @@ function FilesShell() {
           onSaveMarkers={saveMarkers}
           onSaveNote={saveNote}
           onSaveDueDate={saveDueDate}
+          onDelete={deleteFile}
         />
 
         <Chat fileId={selectedId} filename={detail?.filename} />

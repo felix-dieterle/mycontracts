@@ -19,6 +19,7 @@ interface FileDetailProps {
   onSaveMarkers: () => void
   onSaveNote: () => void
   onSaveDueDate: () => void
+  onDelete?: () => void
 }
 
 export function FileDetail({
@@ -35,7 +36,8 @@ export function FileDetail({
   onDueDateDraftChange,
   onSaveMarkers,
   onSaveNote,
-  onSaveDueDate
+  onSaveDueDate,
+  onDelete
 }: FileDetailProps) {
   return (
     <section style={styles.card}>
@@ -118,6 +120,20 @@ export function FileDetail({
           <div>
             <a href={`${apiBase}/api/files/${detail.id}/download`} style={styles.link}>Download</a>
           </div>
+          {onDelete && (
+            <div>
+              <button 
+                style={{ ...styles.secondaryButton, backgroundColor: '#fee', color: '#c00', border: '1px solid #fcc' }}
+                onClick={() => {
+                  if (window.confirm(`Datei "${detail.filename}" wirklich löschen?`)) {
+                    onDelete()
+                  }
+                }}
+              >
+                🗑️ Datei löschen
+              </button>
+            </div>
+          )}
           <div>
             <div style={styles.label}>OCR</div>
             {!detail.ocr && <div style={styles.muted}>Keine OCR verknüpft.</div>}
