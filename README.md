@@ -28,8 +28,10 @@ Das Vertrags-Cockpit bietet einen **strategischen Überblick** über alle Vertr�
 ✅ **Micrometer Metrics** – Prometheus-kompatible Health & Metrics Endpoints  
 
 **Weitere Dokumentation:**
+- [START.md](START.md) – **Schnellstart-Anleitung für Release-JAR** (Standalone-Deployment)
 - [USAGE.md](USAGE.md) – Schritt-für-Schritt Nutzung mit UI- und API-Beispielen
 - [API.md](API.md) – Vollständige REST API Referenz (Marker, Due Dates, Notes)
+- [CI-CD.md](CI-CD.md) – Build, Release und Deployment-Prozess
 - [docs/FREE-TIER-AI-APIS.md](docs/FREE-TIER-AI-APIS.md) – Kostenlose AI APIs und Free Tier Optionen
 
 ## Benutzeroberfläche
@@ -176,6 +178,26 @@ Das System unterstützt **5 unabhängige Marker** pro Vertrag:
 **Beispiel:** Ein Lizenz-Vertrag kann gleichzeitig `[MISSING_INFO]` + `[INCOMPLETE_OCR]` haben (komplexe Situation wird erfasst).
 
 ## Quickstart
+
+### Option 1: Release JAR (empfohlen für Produktion)
+
+**Die Release-JAR ist vollständig eigenständig lauffähig!** Nur Java 17+ erforderlich.
+
+```bash
+# JAR herunterladen von GitHub Releases oder selbst bauen:
+cd backend && mvn clean package
+
+# Starten (Windows, Linux, macOS):
+java -jar backend/target/mycontracts-0.0.1-SNAPSHOT.jar
+```
+
+**➡️ Siehe [START.md](START.md) für detaillierte Anleitung, Konfiguration und Systemd-Service Setup**
+
+Alternativ nutze die bereitgestellten Start-Skripte:
+- **Linux/macOS:** `./start.sh`
+- **Windows:** `start.bat`
+
+### Option 2: Docker (empfohlen für Entwicklung)
 
 1. Kopiere `.env.example` nach `.env` und passe ggf. Pfade an (z. B. `WATCH_DIR` und `FILE_STORAGE_PATH`).
 2. Starte das Projekt lokal:

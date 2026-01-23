@@ -1,0 +1,80 @@
+# ==========================================
+# mycontracts - Application Properties
+# ==========================================
+#
+# Diese Datei kann neben der JAR-Datei platziert werden, um die Konfiguration
+# anzupassen. Die Anwendung funktioniert auch OHNE diese Datei!
+#
+# Nutzung:
+#   1. Speichere diese Datei als "application.properties" im gleichen Verzeichnis wie die JAR
+#   2. Passe die Werte nach Bedarf an
+#   3. Starte die JAR normal: java -jar mycontracts.jar
+#
+# Die Werte hier überschreiben die eingebauten Defaults.
+#
+
+# ==========================================
+# Server Configuration
+# ==========================================
+
+# HTTP Port (Default: 8080)
+server.port=8080
+
+# Context Path (Default: /)
+# server.servlet.context-path=/mycontracts
+
+# ==========================================
+# Database
+# ==========================================
+
+# SQLite Database (Default: ./mycontracts.db)
+spring.datasource.url=jdbc:sqlite:mycontracts.db
+spring.datasource.driver-class-name=org.sqlite.JDBC
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.database-platform=org.hibernate.community.dialect.SQLiteDialect
+
+# ==========================================
+# Logging
+# ==========================================
+
+# Log Level (Default: INFO)
+logging.level.root=INFO
+logging.level.de.flexis.mycontracts=INFO
+
+# Log File (optional - standardmäßig nur Console)
+# logging.file.name=mycontracts.log
+
+# ==========================================
+# Actuator / Metrics
+# ==========================================
+
+# Welche Endpoints sollen verfügbar sein
+management.endpoints.web.exposure.include=health,metrics,prometheus
+management.endpoint.health.probes.enabled=true
+
+# ==========================================
+# AI Configuration (Optional)
+# ==========================================
+
+# OpenRouter API Configuration
+# Hinweis: Ohne API-Key sind AI-Features deaktiviert
+# openrouter.api.key=sk-or-...
+# openrouter.api.base-url=https://openrouter.ai/api/v1
+# openrouter.api.model=openai/gpt-3.5-turbo
+
+# ==========================================
+# HINWEIS: Umgebungsvariablen haben Vorrang!
+# ==========================================
+#
+# Wenn du Umgebungsvariablen setzt, haben diese Vorrang vor dieser Datei:
+#
+#   export FILE_STORAGE_PATH=/custom/path
+#   java -jar mycontracts.jar
+#
+# Environment-Variablen aus .env.example:
+#   - FILE_STORAGE_PATH (Default: ./data/files)
+#   - WATCH_DIR (Default: ./data/incoming)
+#   - OPENROUTER_API_KEY
+#   - OPENROUTER_MODEL
+#   - SPRING_DATASOURCE_URL
+#
