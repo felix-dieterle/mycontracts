@@ -111,4 +111,60 @@ public class ContractControllerIntegrationTest {
         String idStr = json.substring(idIndex + 5, comma);
         return Long.parseLong(idStr);
     }
+
+    @Test
+    void getContract_returnsNotFound_whenContractDoesNotExist() throws Exception {
+        mvc.perform(get("/api/contracts/999999"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void updateContract_returnsBadRequest_whenContractDoesNotExist() throws Exception {
+        mvc.perform(put("/api/contracts/999999")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"title\":\"New Title\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateContract_returnsBadRequest_whenTitleIsEmpty() throws Exception {
+        // Create a contract
+        String result = mvc.perform(post("/api/contracts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"title\":\"Valid Title\"}"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        Long id = extractIdFromJson(result);
+
+        // Try to update with empty title
+        mvc.perform(put("/api/contracts/" + id)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"title\":\"\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void deleteContract_returnsNotFound_whenContractDoesNotExist() throws Exception {
+        mvc.perform(delete("/api/contracts/999999"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void getFilesForContract() throws Exception {
+        // Create a contract
+        String result = mvc.perform(post("/api/contracts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"title\":\"Contract with Files\"}"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        Long contractId = extractIdFromJson(result);
+
+        // Get files for contract (should be empty initially)
+        mvc.perform(get("/api/contracts/" + contractId + "/files"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
 }
