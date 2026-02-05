@@ -105,9 +105,13 @@ test.describe('UI Workflow - Visual Documentation', () => {
     await page.goto('/');
     await page.waitForTimeout(2000);
     
-    // Try to find and click navigation links
-    const navLinks = await page.locator('nav a, [role="navigation"] a').all();
-    expect(navLinks.length).toBeGreaterThan(0);
+    // Check for navigation buttons in the header
+    const filesButton = page.getByRole('button', { name: /files/i });
+    const tasksButton = page.getByRole('button', { name: /tasks/i });
+    
+    // Verify navigation buttons exist
+    await expect(filesButton).toBeVisible();
+    await expect(tasksButton).toBeVisible();
     
     await page.screenshot({ path: `${screenshotsDir}/07-navigation.png`, fullPage: true });
   });
