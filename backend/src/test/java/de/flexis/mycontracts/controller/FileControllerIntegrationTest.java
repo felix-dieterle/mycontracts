@@ -131,4 +131,106 @@ public class FileControllerIntegrationTest {
         String idStr = json.substring(idIndex + 5, comma);
         return Long.parseLong(idStr);
     }
+
+    @Test
+    void bulkUpdateMarkers() throws Exception {
+        // Upload test files
+        MockMultipartFile file1 = new MockMultipartFile("file", "bulk1.txt", MediaType.TEXT_PLAIN_VALUE, "bulk1".getBytes());
+        MockMultipartFile file2 = new MockMultipartFile("file", "bulk2.txt", MediaType.TEXT_PLAIN_VALUE, "bulk2".getBytes());
+
+        String result1 = mvc.perform(multipart("/api/files/upload").file(file1))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        String result2 = mvc.perform(multipart("/api/files/upload").file(file2))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        Long id1 = extractIdFromJson(result1);
+        Long id2 = extractIdFromJson(result2);
+
+        // Bulk update markers
+        mvc.perform(patch("/api/files/bulk/markers")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"fileIds\":[" + id1 + "," + id2 + "],\"markers\":[\"URGENT\",\"REVIEW\"]}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].markersJson").value("URGENT,REVIEW"))
+                .andExpect(jsonPath("$[1].markersJson").value("URGENT,REVIEW"));
+    }
+
+    @Test
+    void bulkUpdateDueDate() throws Exception {
+        // Upload test files
+        MockMultipartFile file1 = new MockMultipartFile("file", "bulkdue1.txt", MediaType.TEXT_PLAIN_VALUE, "bulkdue1".getBytes());
+        MockMultipartFile file2 = new MockMultipartFile("file", "bulkdue2.txt", MediaType.TEXT_PLAIN_VALUE, "bulkdue2".getBytes());
+
+        String result1 = mvc.perform(multipart("/api/files/upload").file(file1))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        String result2 = mvc.perform(multipart("/api/files/upload").file(file2))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        Long id1 = extractIdFromJson(result1);
+        Long id2 = extractIdFromJson(result2);
+
+        // Bulk update due date
+        mvc.perform(patch("/api/files/bulk/due-date")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"fileIds\":[" + id1 + "," + id2 + "],\"dueDate\":\"2026-12-31T23:59:59Z\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].dueDate").value("2026-12-31T23:59:59Z"))
+                .andExpect(jsonPath("$[1].dueDate").value("2026-12-31T23:59:59Z"));
+    }
+
+    @Test
+    void updateNote() throws Exception {
+        // Upload test file
+        MockMultipartFile file = new MockMultipartFile("file", "note-test.txt", MediaType.TEXT_PLAIN_VALUE, "note test".getBytes());
+
+        String result = mvc.perform(multipart("/api/files/upload").file(file))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        Long id = extractIdFromJson(result);
+
+        // Update note
+        mvc.perform(patch("/api/files/" + id + "/note")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"note\":\"This is a test note\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.note").value("This is a test note"));
+    }
+
+    @Test
+    void updateMarkers() throws Exception {
+        // Upload test file
+        MockMultipartFile file = new MockMultipartFile("file", "markers-test.txt", MediaType.TEXT_PLAIN_VALUE, "markers test".getBytes());
+
+        String result = mvc.perform(multipart("/api/files/upload").file(file))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        Long id = extractIdFromJson(result);
+
+        // Update markers
+        mvc.perform(patch("/api/files/" + id + "/markers")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"markers\":[\"URGENT\",\"MISSING_INFO\"]}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.markersJson").value("URGENT,MISSING_INFO"));
+    }
+
+    @Test
+    void getFile_returnsNotFound_whenFileDoesNotExist() throws Exception {
+        mvc.perform(get("/api/files/999999"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void rejectEmptyFile() throws Exception {
+        MockMultipartFile emptyFile = new MockMultipartFile("file", "empty.txt", MediaType.TEXT_PLAIN_VALUE, new byte[0]);
+
+        mvc.perform(multipart("/api/files/upload").file(emptyFile))
+                .andExpect(status().isBadRequest());
+    }
 }

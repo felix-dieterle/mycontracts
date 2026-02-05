@@ -15,6 +15,10 @@ test.describe('UI Workflow - Visual Documentation', () => {
     await page.goto('/', { waitUntil: 'networkidle' });
     await page.waitForTimeout(2000);
     
+    // Verify page title or main heading
+    const hasContent = await page.locator('body').isVisible();
+    expect(hasContent).toBeTruthy();
+    
     // Screenshot: Initial app load
     await page.screenshot({ path: `${screenshotsDir}/01-app-loaded.png`, fullPage: true });
   });
@@ -22,6 +26,10 @@ test.describe('UI Workflow - Visual Documentation', () => {
   test('02 - File list visible', async ({ page }) => {
     await page.goto('/');
     await page.waitForTimeout(3000);
+    
+    // Check if "Dateien" (Files) heading is visible
+    const filesHeading = page.getByRole('heading', { name: /dateien/i });
+    await expect(filesHeading).toBeVisible();
     
     // Screenshot: File list
     await page.screenshot({ path: `${screenshotsDir}/02-file-list.png`, fullPage: true });
@@ -49,8 +57,13 @@ test.describe('UI Workflow - Visual Documentation', () => {
     // Look for checkboxes
     const checkboxes = await page.locator('input[type="checkbox"]').all();
     if (checkboxes.length > 0) {
+      const isCheckedBefore = await checkboxes[0].isChecked();
       await checkboxes[0].check({ timeout: 5000 }).catch(() => null);
       await page.waitForTimeout(500);
+      
+      // Verify checkbox state changed
+      const isCheckedAfter = await checkboxes[0].isChecked();
+      expect(isCheckedAfter).toBeTruthy();
     }
     
     // Screenshot: Markers interaction
@@ -66,6 +79,10 @@ test.describe('UI Workflow - Visual Documentation', () => {
     if (dateInputs.length > 0) {
       await dateInputs[0].fill('2025-12-31', { timeout: 5000 }).catch(() => null);
       await page.waitForTimeout(500);
+      
+      // Verify date was set
+      const value = await dateInputs[0].inputValue();
+      expect(value).toBe('2025-12-31');
     }
     
     // Screenshot: Due date set
@@ -76,7 +93,37 @@ test.describe('UI Workflow - Visual Documentation', () => {
     await page.goto('/');
     await page.waitForTimeout(3000);
     
+    // Verify app is still responsive
+    const body = page.locator('body');
+    await expect(body).toBeVisible();
+    
     // Full page screenshot
     await page.screenshot({ path: `${screenshotsDir}/06-final-state.png`, fullPage: true });
+  });
+
+  test('07 - Navigation works', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForTimeout(2000);
+    
+    // Check for navigation buttons in the header
+    const filesButton = page.getByRole('button', { name: /files/i });
+    const tasksButton = page.getByRole('button', { name: /tasks/i });
+    
+    // Verify navigation buttons exist
+    await expect(filesButton).toBeVisible();
+    await expect(tasksButton).toBeVisible();
+    
+    await page.screenshot({ path: `${screenshotsDir}/07-navigation.png`, fullPage: true });
+  });
+
+  test('08 - Error handling', async ({ page }) => {
+    // Navigate to a non-existent route to test error handling
+    const response = await page.goto('/nonexistent-route');
+    
+    // App should still load (SPA behavior)
+    const body = page.locator('body');
+    await expect(body).toBeVisible();
+    
+    await page.screenshot({ path: `${screenshotsDir}/08-error-handling.png`, fullPage: true });
   });
 });

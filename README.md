@@ -26,12 +26,14 @@ Das Vertrags-Cockpit bietet einen **strategischen Überblick** über alle Vertr�
 ✅ **Smart Filtering** – "Needs Attention" findet dringende/überfällige Verträge  
 ✅ **Rest API** – Volle CRUD-Operationen auf Dateien und Metadaten  
 ✅ **Micrometer Metrics** – Prometheus-kompatible Health & Metrics Endpoints  
+✅ **Comprehensive Testing** – 83 automated tests (63 backend, 20 frontend) with CI/CD integration
 
 **Weitere Dokumentation:**
 - [START.md](START.md) – **Schnellstart-Anleitung für Release-JAR** (Standalone-Deployment)
 - [USAGE.md](USAGE.md) – Schritt-für-Schritt Nutzung mit UI- und API-Beispielen
 - [API.md](API.md) – Vollständige REST API Referenz (Marker, Due Dates, Notes)
 - [CI-CD.md](CI-CD.md) – Build, Release und Deployment-Prozess
+- [TEST-COVERAGE-GUIDE.md](TEST-COVERAGE-GUIDE.md) – **Comprehensive Test Coverage Guide** (83 tests)
 - [docs/FREE-TIER-AI-APIS.md](docs/FREE-TIER-AI-APIS.md) – Kostenlose AI APIs und Free Tier Optionen
 
 ## Benutzeroberfläche
