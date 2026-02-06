@@ -7,6 +7,11 @@ frontend/node_modules/
 frontend/dist/
 frontend/test-results/
 frontend/screenshots/
+frontend/android/build/
+frontend/android/.gradle/
+frontend/android/app/build/
+frontend/android/app/.cxx/
+frontend/android/local.properties
 .env
 .DS_Store
 .idea/

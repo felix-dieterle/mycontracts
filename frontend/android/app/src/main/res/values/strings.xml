@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MyContracts</string>
+    <string name="title_activity_main">MyContracts</string>
+    <string name="package_name">com.mycontracts.app</string>
+    <string name="custom_url_scheme">com.mycontracts.app</string>
+</resources>

@@ -70,6 +70,24 @@ jobs:
         working-directory: frontend
         run: npm run build
 
+      - name: Sync Capacitor
+        working-directory: frontend
+        run: npx cap sync android
+
+      - name: Build Android APK
+        working-directory: frontend/android
+        run: ./gradlew assembleRelease
+
+      - name: Copy APK with version
+        run: |
+          APK_FILE=$(find frontend/android/app/build/outputs/apk/release -name "*.apk" -type f | head -n 1)
+          if [ -z "$APK_FILE" ]; then
+            echo "Error: No APK file found"
+            exit 1
+          fi
+          echo "Found APK: $APK_FILE"
+          cp "$APK_FILE" mycontracts-${{ steps.version.outputs.VERSION }}.apk
+
       - name: Create frontend archive
         run: |
           cd frontend/dist
@@ -95,6 +113,7 @@ jobs:
           path: |
             mycontracts-backend-${{ steps.version.outputs.VERSION }}.jar
             mycontracts-frontend-${{ steps.version.outputs.VERSION }}.zip
+            mycontracts-${{ steps.version.outputs.VERSION }}.apk
           retention-days: 30
 
       - name: Create Release (for tag builds)
@@ -104,6 +123,7 @@ jobs:
           files: |
             mycontracts-backend-${{ steps.version.outputs.VERSION }}.jar
             mycontracts-frontend-${{ steps.version.outputs.VERSION }}.zip
+            mycontracts-${{ steps.version.outputs.VERSION }}.apk
           body: |
             ## 📦 Downloads
             
@@ -111,6 +131,7 @@ jobs:
             
             - **Backend (JAR)**: `mycontracts-backend-${{ steps.version.outputs.VERSION }}.jar`
             - **Frontend (ZIP)**: `mycontracts-frontend-${{ steps.version.outputs.VERSION }}.zip`
+            - **Android (APK)**: `mycontracts-${{ steps.version.outputs.VERSION }}.apk`
           generate_release_notes: true
           append_body: true
           draft: false
@@ -125,6 +146,7 @@ jobs:
           files: |
             mycontracts-backend-${{ steps.version.outputs.VERSION }}.jar
             mycontracts-frontend-${{ steps.version.outputs.VERSION }}.zip
+            mycontracts-${{ steps.version.outputs.VERSION }}.apk
           body: |
             ## 📦 Downloads
             
@@ -132,6 +154,7 @@ jobs:
             
             - **Backend (JAR)**: `mycontracts-backend-${{ steps.version.outputs.VERSION }}.jar`
             - **Frontend (ZIP)**: `mycontracts-frontend-${{ steps.version.outputs.VERSION }}.zip`
+            - **Android (APK)**: `mycontracts-${{ steps.version.outputs.VERSION }}.apk`
           generate_release_notes: true
           append_body: true
           draft: false
