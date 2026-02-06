@@ -12,7 +12,7 @@
     "test:ui:headed": "playwright test --headed",
     "test:ui:debug": "playwright test --debug",
     "cap:sync": "cap sync",
-    "cap:build:android": "npm run build && cap sync android && cd android && ./gradlew assembleRelease && cd ..",
+    "cap:build:android": "npm run build && cap sync android && ./android/gradlew -p android assembleRelease",
     "cap:open:android": "cap open android"
   },
   "dependencies": {
