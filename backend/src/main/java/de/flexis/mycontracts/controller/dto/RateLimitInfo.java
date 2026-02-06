@@ -21,7 +21,7 @@ public record RateLimitInfo(
         if (limit == null || remaining == null || limit == 0) {
             return null;
         }
-        int used = limit - remaining;
+        int used = Math.max(0, limit - remaining);
         return (int) Math.round((double) used / limit * 100);
     }
 

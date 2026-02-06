@@ -17,7 +17,7 @@ export function RateLimitIndicator({ rateLimit }: RateLimitIndicatorProps) {
     return null
   }
 
-  const used = rateLimit.limit - rateLimit.remaining
+  const used = Math.max(0, rateLimit.limit - rateLimit.remaining)
   const usagePercentage = Math.round((used / rateLimit.limit) * 100)
   
   let color: string
