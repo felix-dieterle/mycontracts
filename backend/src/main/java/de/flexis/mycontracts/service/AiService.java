@@ -4,9 +4,11 @@ import de.flexis.mycontracts.config.OpenRouterConfig;
 import de.flexis.mycontracts.controller.dto.ChatRequest;
 import de.flexis.mycontracts.controller.dto.ChatResponse;
 import de.flexis.mycontracts.controller.dto.ContractOptimizationResponse;
+import de.flexis.mycontracts.controller.dto.RateLimitInfo;
 import de.flexis.mycontracts.model.StoredFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -78,19 +80,26 @@ public class AiService {
                 "messages", messages
             );
 
-            Map<String, Object> response = webClient.post()
+            ResponseEntity<Map> responseEntity = webClient.post()
                     .uri("/chat/completions")
                     .bodyValue(requestBody)
                     .retrieve()
-                    .bodyToMono(Map.class)
+                    .toEntity(Map.class)
                     .block();
 
-            if (response != null && response.containsKey("choices")) {
-                List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
-                if (!choices.isEmpty()) {
-                    Map<String, Object> choice = choices.get(0);
-                    Map<String, String> message = (Map<String, String>) choice.get("message");
-                    return ChatResponse.success(message.get("content"));
+            if (responseEntity != null && responseEntity.getBody() != null) {
+                Map<String, Object> response = responseEntity.getBody();
+                
+                // Extract rate limit information from headers
+                RateLimitInfo rateLimit = extractRateLimitInfo(responseEntity, "OpenRouter Chat");
+                
+                if (response.containsKey("choices")) {
+                    List<Map<String, Object>> choices = (List<Map<String, Object>>) response.get("choices");
+                    if (!choices.isEmpty()) {
+                        Map<String, Object> choice = choices.get(0);
+                        Map<String, String> message = (Map<String, String>) choice.get("message");
+                        return ChatResponse.success(message.get("content"), rateLimit);
+                    }
                 }
             }
 
@@ -251,5 +260,55 @@ public class AiService {
             improvements.isEmpty() ? List.of("No specific improvements identified") : improvements,
             content
         );
+    }
+
+    /**
+     * Extract rate limit information from OpenRouter API response headers
+     * OpenRouter includes these headers:
+     * - X-RateLimit-Limit-Requests: Total requests allowed
+     * - X-RateLimit-Remaining-Requests: Remaining requests
+     * - X-RateLimit-Reset-Requests: Unix timestamp when the limit resets
+     */
+    private RateLimitInfo extractRateLimitInfo(ResponseEntity<?> responseEntity, String apiName) {
+        try {
+            // Try to extract rate limit headers
+            // OpenRouter uses X-RateLimit-* headers
+            List<String> limitHeaders = responseEntity.getHeaders().get("X-RateLimit-Limit-Requests");
+            List<String> remainingHeaders = responseEntity.getHeaders().get("X-RateLimit-Remaining-Requests");
+            List<String> resetHeaders = responseEntity.getHeaders().get("X-RateLimit-Reset-Requests");
+
+            Integer limit = null;
+            Integer remaining = null;
+            Long resetAt = null;
+
+            if (limitHeaders != null && !limitHeaders.isEmpty()) {
+                try {
+                    limit = Integer.parseInt(limitHeaders.get(0));
+                } catch (NumberFormatException e) {
+                    log.debug("Failed to parse rate limit header: {}", limitHeaders.get(0));
+                }
+            }
+
+            if (remainingHeaders != null && !remainingHeaders.isEmpty()) {
+                try {
+                    remaining = Integer.parseInt(remainingHeaders.get(0));
+                } catch (NumberFormatException e) {
+                    log.debug("Failed to parse rate limit remaining header: {}", remainingHeaders.get(0));
+                }
+            }
+
+            if (resetHeaders != null && !resetHeaders.isEmpty()) {
+                try {
+                    resetAt = Long.parseLong(resetHeaders.get(0));
+                } catch (NumberFormatException e) {
+                    log.debug("Failed to parse rate limit reset header: {}", resetHeaders.get(0));
+                }
+            }
+
+            return RateLimitInfo.of(limit, remaining, resetAt, apiName);
+        } catch (Exception e) {
+            log.debug("Error extracting rate limit info", e);
+            return RateLimitInfo.empty(apiName);
+        }
     }
 }

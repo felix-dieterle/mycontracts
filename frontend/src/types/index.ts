@@ -43,6 +43,14 @@ export const MARKER_OPTIONS = ['URGENT', 'REVIEW', 'MISSING_INFO', 'INCOMPLETE_O
 // Markers that indicate a file needs attention
 export const NEEDS_ATTENTION_MARKERS = ['URGENT', 'REVIEW', 'MISSING_INFO']
 
+// Rate limit information
+export type RateLimitInfo = {
+  limit: number | null
+  remaining: number | null
+  resetAt: number | null
+  apiName: string
+}
+
 // AI Chat types
 export type ChatMessage = {
   role: 'user' | 'assistant' | 'error'
@@ -58,6 +66,7 @@ export type ChatResponse = {
   message: string
   role: string
   error: boolean
+  rateLimit?: RateLimitInfo | null
 }
 
 export type ContractOptimizationResponse = {
