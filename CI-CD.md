@@ -24,9 +24,11 @@ The release workflow creates downloadable artifacts in two scenarios:
 When code is merged to `main` or `development` branches, the workflow automatically:
 - Builds the backend JAR file
 - Builds the frontend distribution
+- Builds the Android APK
 - Uploads artifacts to GitHub Actions (available for 30 days):
   - `mycontracts-backend-<branch>-<commit>.jar` - Backend executable JAR
   - `mycontracts-frontend-<branch>-<commit>.zip` - Frontend static files
+  - `mycontracts-<branch>-<commit>.apk` - Android APK
 
 **To download branch artifacts:**
 1. Go to the [Actions tab](https://github.com/felix-dieterle/mycontracts/actions)
@@ -49,10 +51,12 @@ When you create a git tag, the workflow creates a permanent GitHub Release.
 2. **The workflow automatically:**
    - Builds the backend JAR file
    - Builds the frontend distribution
+   - Builds the Android APK
    - Creates a GitHub Release
    - Uploads artifacts:
      - `mycontracts-backend-1.0.0.jar` - Backend executable JAR
      - `mycontracts-frontend-1.0.0.zip` - Frontend static files
+     - `mycontracts-1.0.0.apk` - Android APK
 
 3. **Find your release:**
    - Go to the [Releases page](https://github.com/felix-dieterle/mycontracts/releases)
@@ -79,6 +83,13 @@ java -jar mycontracts-backend-1.0.0.jar
 ```bash
 unzip mycontracts-frontend-1.0.0.zip -d /var/www/html
 # Or serve with any static file server
+```
+
+**Android:**
+```bash
+# Install the APK on your Android device
+adb install mycontracts-1.0.0.apk
+# Or transfer to your device and install manually
 ```
 
 ## Workflow Files

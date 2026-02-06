@@ -10,9 +10,15 @@
     "test": "vitest",
     "test:ui": "playwright test",
     "test:ui:headed": "playwright test --headed",
-    "test:ui:debug": "playwright test --debug"
+    "test:ui:debug": "playwright test --debug",
+    "cap:sync": "cap sync",
+    "cap:build:android": "npm run build && cap sync android && cd android && ./gradlew assembleRelease && cd ..",
+    "cap:open:android": "cap open android"
   },
   "dependencies": {
+    "@capacitor/android": "^8.0.2",
+    "@capacitor/cli": "^8.0.2",
+    "@capacitor/core": "^8.0.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.30.2"
