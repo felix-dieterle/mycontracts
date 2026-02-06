@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { ChatMessage, ChatRequest, ChatResponse, ContractOptimizationResponse } from '../types'
+import { ChatMessage, ChatRequest, ChatResponse, ContractOptimizationResponse, RateLimitInfo } from '../types'
 import { apiBase } from '../utils/apiConfig'
 import { styles } from '../styles/styles'
+import { RateLimitIndicator } from './RateLimitIndicator'
 
 type ChatProps = {
   fileId?: number | null
@@ -14,6 +15,7 @@ export function Chat({ fileId, filename }: ChatProps) {
   const [loading, setLoading] = useState(false)
   const [optimizing, setOptimizing] = useState(false)
   const [optimization, setOptimization] = useState<ContractOptimizationResponse | null>(null)
+  const [rateLimit, setRateLimit] = useState<RateLimitInfo | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const scrollToBottom = () => {
@@ -48,6 +50,11 @@ export function Chat({ fileId, filename }: ChatProps) {
       })
 
       const data: ChatResponse = await res.json()
+      
+      // Update rate limit info if available
+      if (data.rateLimit) {
+        setRateLimit(data.rateLimit)
+      }
       
       const assistantMessage: ChatMessage = {
         role: data.error ? 'error' : 'assistant',
@@ -107,9 +114,12 @@ export function Chat({ fileId, filename }: ChatProps) {
   return (
     <div style={{ ...styles.panel, display: 'flex', flexDirection: 'column', height: '100%' }}>
       <div style={{ padding: '12px', borderBottom: '1px solid #ddd', backgroundColor: '#f8f9fa' }}>
-        <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: 600 }}>
-          💬 AI Assistant
-        </h3>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+          <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 600 }}>
+            💬 AI Assistant
+          </h3>
+          <RateLimitIndicator rateLimit={rateLimit} />
+        </div>
         {filename && (
           <div style={{ fontSize: '13px', color: '#666' }}>
             Context: {filename}
