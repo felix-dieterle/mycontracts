@@ -3,6 +3,7 @@ import { FileDetail as FileDetailType, MARKER_OPTIONS } from '../types'
 import { formatBytes, formatDate, prettyJson } from '../utils'
 import { styles, markerBadgeStyle } from '../styles/styles'
 import { apiBase } from '../utils/apiConfig'
+import { isMobile, shareFile } from '../utils/mobile'
 
 interface FileDetailProps {
   detail: FileDetailType | null
@@ -119,6 +120,17 @@ export function FileDetail({
           </div>
           <div>
             <a href={`${apiBase}/api/files/${detail.id}/download`} style={styles.link}>Download</a>
+            {isMobile() && (
+              <>
+                {' '}·{' '}
+                <button
+                  onClick={() => shareFile(`${apiBase}/api/files/${detail.id}/download`, detail.filename)}
+                  style={{ ...styles.link, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                >
+                  📤 Share
+                </button>
+              </>
+            )}
           </div>
           {onDelete && (
             <div>
