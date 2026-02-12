@@ -164,17 +164,34 @@ npm run cap:build:android
 
 ## CI/CD Integration
 
-The existing GitHub Actions workflows already support Android APK builds:
+The GitHub Actions workflows support automated Android APK builds:
 
 **Release Workflow (`release.yml`):**
-- Automatically builds APK on tag pushes
-- Creates GitHub releases with APK artifacts
-- Builds APK on branch merges (main, development)
+- **Branch Builds** (main, development): Creates **signed debug APK** for easy testing
+- **Tag Builds**: Creates unsigned release APK for production
+- Automatically creates GitHub releases with downloadable artifacts
+- Both upload to GitHub Actions artifacts (30-day retention)
+
+**APK Types:**
+- **Debug APK** (`-debug.apk`): Signed with Android's default debug keystore
+  - ✅ Can be installed immediately
+  - ✅ No manual signing required
+  - ⚠️ For testing only, not for production
+  
+- **Release APK** (`.apk`): Unsigned by default
+  - ❌ Requires manual signing before installation
+  - ✅ For production deployment to Play Store
+  - See [frontend/android/README.md](frontend/android/README.md) for signing instructions
 
 **Artifacts Available:**
 - `mycontracts-backend-{version}.jar`
 - `mycontracts-frontend-{version}.zip`
-- `mycontracts-{version}.apk`
+- `mycontracts-{version}-debug.apk` (branch builds)
+- `mycontracts-{version}.apk` (tag builds)
+
+**Download Locations:**
+1. **GitHub Releases**: [Releases page](https://github.com/felix-dieterle/mycontracts/releases) - Direct download links
+2. **Actions Artifacts**: Actions tab → Workflow run → Artifacts section (30-day retention)
 
 ## Next Steps for Users
 
