@@ -6,13 +6,18 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:production": "VITE_API_URL=https://your-backend-url.com vite build",
+    "build:staging": "VITE_API_URL=https://staging-backend-url.com vite build",
     "preview": "vite preview",
     "test": "vitest",
     "test:ui": "playwright test",
     "test:ui:headed": "playwright test --headed",
     "test:ui:debug": "playwright test --debug",
     "cap:sync": "cap sync",
+    "cap:sync:dev": "CAPACITOR_SERVER_URL=http://10.0.2.2:8080 cap sync android",
     "cap:build:android": "npm run build && cap sync android && ./android/gradlew -p android assembleRelease",
+    "cap:build:android:dev": "npm run build && npm run cap:sync:dev && ./android/gradlew -p android assembleDebug",
+    "cap:build:android:production": "npm run build:production && cap sync android && ./android/gradlew -p android assembleRelease",
     "cap:open:android": "cap open android"
   },
   "dependencies": {
