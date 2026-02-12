@@ -1,15 +1,26 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
+// Environment-based configuration
+// For development: Set CAPACITOR_SERVER_URL environment variable
+// For production: Leave empty to use bundled web files
+const serverUrl = process.env.CAPACITOR_SERVER_URL;
+
 const config: CapacitorConfig = {
   appId: 'com.mycontracts.app',
   appName: 'MyContracts',
   webDir: 'dist',
-  server: {
-    // For development, you can set the backend URL here
-    // Example: url: 'http://10.0.2.2:8080' for Android emulator
-    // Example: url: 'http://192.168.1.100:8080' for physical device
-    // For production, the app will use the bundled web files
-  }
+  server: serverUrl ? {
+    url: serverUrl,
+    cleartext: true, // Required for HTTP (not HTTPS) during development
+  } : undefined,
+  // Enable native plugins
+  plugins: {
+    SplashScreen: {
+      launchShowDuration: 2000,
+      backgroundColor: '#ffffff',
+      showSpinner: false,
+    },
+  },
 };
 
 export default config;

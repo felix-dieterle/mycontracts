@@ -9,6 +9,8 @@ import { FileList } from './components/FileList'
 import { FileDetail as FileDetailComponent } from './components/FileDetail'
 import { Chat } from './components/Chat'
 import { Tasks } from './components/Tasks'
+import MobileFileUpload from './components/MobileFileUpload'
+import { isMobile } from './utils/mobile'
 
 export default function App() {
   return (
@@ -34,6 +36,7 @@ function FilesShell() {
   const [detail, setDetail] = useState<FileDetail | null>(null)
   const [detailState, setDetailState] = useState<'idle' | 'loading' | 'error'>('idle')
   const [uploading, setUploading] = useState(false)
+  const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle')
   const [error, setError] = useState<string | null>(null)
   const [markerFilter, setMarkerFilter] = useState<MarkerFilter>('ALL')
   const [ocrFilter, setOcrFilter] = useState<string>('ALL')
@@ -242,6 +245,7 @@ function FilesShell() {
     const body = new FormData()
     body.append('file', file)
     setUploading(true)
+    setUploadStatus('uploading')
     setError(null)
     try {
       const res = await fetch(apiBase + '/api/files/upload', { method: 'POST', body })
@@ -250,8 +254,37 @@ function FilesShell() {
       await refreshList()
       navigate(`/files/${created.id}`)
       input.value = ''
+      setUploadStatus('success')
+      setTimeout(() => setUploadStatus('idle'), 3000)
     } catch (e) {
       setError((e as Error).message)
+      setUploadStatus('error')
+      setTimeout(() => setUploadStatus('idle'), 5000)
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  async function handleMobileUpload(files: FileList | null) {
+    if (!files || !files[0]) return
+    const file = files[0]
+    const body = new FormData()
+    body.append('file', file)
+    setUploading(true)
+    setUploadStatus('uploading')
+    setError(null)
+    try {
+      const res = await fetch(apiBase + '/api/files/upload', { method: 'POST', body })
+      if (!res.ok) throw new Error('Upload failed')
+      const created: FileSummary = await res.json()
+      await refreshList()
+      navigate(`/files/${created.id}`)
+      setUploadStatus('success')
+      setTimeout(() => setUploadStatus('idle'), 3000)
+    } catch (e) {
+      setError((e as Error).message)
+      setUploadStatus('error')
+      setTimeout(() => setUploadStatus('idle'), 5000)
     } finally {
       setUploading(false)
     }
@@ -286,15 +319,22 @@ function FilesShell() {
       </header>
 
       <section style={styles.card}>
-        <form onSubmit={handleUpload} style={styles.uploadRow}>
-          <label style={styles.label}>
-            Datei hochladen
-            <input type="file" name="file" required style={styles.fileInput} />
-          </label>
-          <button type="submit" disabled={uploading} style={styles.primaryButton}>
-            {uploading ? 'Lade...' : 'Upload'}
-          </button>
-        </form>
+        {isMobile() ? (
+          <MobileFileUpload 
+            onFilesSelected={handleMobileUpload}
+            uploadStatus={uploadStatus}
+          />
+        ) : (
+          <form onSubmit={handleUpload} style={styles.uploadRow}>
+            <label style={styles.label}>
+              Datei hochladen
+              <input type="file" name="file" required style={styles.fileInput} />
+            </label>
+            <button type="submit" disabled={uploading} style={styles.primaryButton}>
+              {uploading ? 'Lade...' : 'Upload'}
+            </button>
+          </form>
+        )}
         {error && <div style={styles.error}>{error}</div>}
       </section>
 

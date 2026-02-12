@@ -27,7 +27,7 @@ Das Vertrags-Cockpit bietet einen **strategischen Überblick** über alle Vertr�
 ✅ **Rest API** – Volle CRUD-Operationen auf Dateien und Metadaten  
 ✅ **Micrometer Metrics** – Prometheus-kompatible Health & Metrics Endpoints  
 ✅ **Comprehensive Testing** – 83 automated tests (63 backend, 20 frontend) with CI/CD integration  
-✅ **Android App** – Native Android APK built with Capacitor for mobile access
+✅ **Native Android App** – Full-featured mobile app with camera, file picker, and share functionality
 
 **Weitere Dokumentation:**
 - [START.md](START.md) – **Schnellstart-Anleitung für Release-JAR** (Standalone-Deployment)
@@ -180,6 +180,76 @@ Das System unterstützt **5 unabhängige Marker** pro Vertrag:
 | **FOLLOW_UP** | 🟢 Grün | Follow-up / Nachverfolgung erforderlich |
 
 **Beispiel:** Ein Lizenz-Vertrag kann gleichzeitig `[MISSING_INFO]` + `[INCOMPLETE_OCR]` haben (komplexe Situation wird erfasst).
+
+## Native Android App
+
+Die MyContracts Android App bietet eine vollwertige mobile Lösung mit nativen Features:
+
+### Features
+
+📱 **Mobile-First UI** – Touch-optimierte Benutzeroberfläche für Smartphones und Tablets  
+📷 **Kamera-Integration** – Verträge direkt mit der Kamera fotografieren und hochladen  
+🖼️ **Galerie-Auswahl** – Dateien aus der Geräte-Galerie wählen  
+📤 **Natives Teilen** – Heruntergeladene Verträge mit anderen Apps teilen  
+📁 **Dateisystem-Zugriff** – Speicherung im Dokumente-Ordner des Geräts  
+🔄 **Offline-Fähig** – Frontend-Dateien im APK gebündelt  
+
+### Installation
+
+**Option 1: Download vom GitHub Release**
+1. Gehe zu [Releases](https://github.com/felix-dieterle/mycontracts/releases)
+2. Lade die neueste `mycontracts-X.X.X.apk` herunter
+3. Installiere die APK auf deinem Android-Gerät
+4. Erlaube Installation aus unbekannten Quellen (falls erforderlich)
+
+**Option 2: Selbst bauen**
+```bash
+cd frontend
+
+# Produktions-Build mit eigenem Backend
+VITE_API_URL=https://your-backend-url.com npm run cap:build:android:production
+
+# APK findet sich in: android/app/build/outputs/apk/release/app-release.apk
+```
+
+### Konfiguration
+
+Die App kann auf verschiedene Backend-Server konfiguriert werden:
+
+**Entwicklung (mit Live-Reload):**
+```bash
+# Android Emulator
+CAPACITOR_SERVER_URL=http://10.0.2.2:8080 npm run cap:build:android:dev
+
+# Physisches Gerät (ersetze IP mit deinem Computer)
+CAPACITOR_SERVER_URL=http://192.168.1.100:8080 npm run cap:build:android:dev
+```
+
+**Produktion:**
+```bash
+# Backend URL in .env setzen oder als Variable übergeben
+VITE_API_URL=https://api.mycontracts.com npm run cap:build:android:production
+```
+
+### Verwendung
+
+1. **Verträge hochladen:**
+   - Tippe auf "📤 Choose File"
+   - Wähle zwischen:
+     - 📷 **Take Photo** – Neues Foto mit Kamera
+     - 🖼️ **Choose from Gallery** – Vorhandenes Bild
+     - 📁 **Browse Files** – Dateibrowser
+
+2. **Verträge teilen:**
+   - Öffne einen Vertrag
+   - Tippe auf "📤 Share" neben dem Download-Link
+   - Wähle die Ziel-App (E-Mail, WhatsApp, Drive, etc.)
+
+3. **Dokumente speichern:**
+   - Downloads werden im Dokumente-Ordner gespeichert
+   - Zugriff über die Dateien-App des Geräts
+
+**➡️ Siehe [frontend/android/README.md](frontend/android/README.md) für detaillierte Build-Anleitung und Troubleshooting**
 
 ## Quickstart
 

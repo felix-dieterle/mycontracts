@@ -74,18 +74,36 @@ jobs:
         working-directory: frontend
         run: npx cap sync android
 
-      - name: Build Android APK
+      - name: Build Android Debug APK (for branch builds)
+        if: steps.version.outputs.IS_TAG == 'false'
+        working-directory: frontend/android
+        run: ./gradlew assembleDebug
+
+      - name: Build Android Release APK (for tag builds)
+        if: steps.version.outputs.IS_TAG == 'true'
         working-directory: frontend/android
         run: ./gradlew assembleRelease
 
-      - name: Copy APK with version
+      - name: Copy Debug APK with version (for branch builds)
+        if: steps.version.outputs.IS_TAG == 'false'
+        run: |
+          APK_FILE=$(find frontend/android/app/build/outputs/apk/debug -name "*.apk" -type f | head -n 1)
+          if [ -z "$APK_FILE" ]; then
+            echo "Error: No debug APK file found"
+            exit 1
+          fi
+          echo "Found debug APK: $APK_FILE"
+          cp "$APK_FILE" mycontracts-${{ steps.version.outputs.VERSION }}-debug.apk
+
+      - name: Copy Release APK with version (for tag builds)
+        if: steps.version.outputs.IS_TAG == 'true'
         run: |
           APK_FILE=$(find frontend/android/app/build/outputs/apk/release -name "*.apk" -type f | head -n 1)
           if [ -z "$APK_FILE" ]; then
-            echo "Error: No APK file found"
+            echo "Error: No release APK file found"
             exit 1
           fi
-          echo "Found APK: $APK_FILE"
+          echo "Found release APK: $APK_FILE"
           cp "$APK_FILE" mycontracts-${{ steps.version.outputs.VERSION }}.apk
 
       - name: Create frontend archive
@@ -113,7 +131,7 @@ jobs:
           path: |
             mycontracts-backend-${{ steps.version.outputs.VERSION }}.jar
             mycontracts-frontend-${{ steps.version.outputs.VERSION }}.zip
-            mycontracts-${{ steps.version.outputs.VERSION }}.apk
+            mycontracts-${{ steps.version.outputs.VERSION }}-debug.apk
           retention-days: 30
 
       - name: Create Release (for tag builds)
@@ -146,15 +164,19 @@ jobs:
           files: |
             mycontracts-backend-${{ steps.version.outputs.VERSION }}.jar
             mycontracts-frontend-${{ steps.version.outputs.VERSION }}.zip
-            mycontracts-${{ steps.version.outputs.VERSION }}.apk
+            mycontracts-${{ steps.version.outputs.VERSION }}-debug.apk
           body: |
             ## 📦 Downloads
+            
+            This is a development build from the `${{ github.ref_name }}` branch.
+            
+            **Note:** The Android APK is a **debug build** signed with the default debug keystore, making it easy to install for testing.
             
             This release includes the following artifacts:
             
             - **Backend (JAR)**: `mycontracts-backend-${{ steps.version.outputs.VERSION }}.jar`
             - **Frontend (ZIP)**: `mycontracts-frontend-${{ steps.version.outputs.VERSION }}.zip`
-            - **Android (APK)**: `mycontracts-${{ steps.version.outputs.VERSION }}.apk`
+            - **Android Debug APK**: `mycontracts-${{ steps.version.outputs.VERSION }}-debug.apk` ⚠️ Debug build - for testing only
           generate_release_notes: true
           append_body: true
           draft: false
