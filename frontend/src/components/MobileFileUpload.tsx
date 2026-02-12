@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { isMobile, takePhoto, pickImage } from '../utils/mobile';
+import { isMobile, takePhoto, pickImage, base64ToFile } from '../utils/mobile';
 
 interface MobileFileUploadProps {
   onFilesSelected: (files: FileList | null) => void;
@@ -18,17 +18,12 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({ onFilesSelected, up
   const handleCameraCapture = async () => {
     const photo = await takePhoto();
     if (photo) {
-      // Convert base64 to File
-      const byteCharacters = atob(photo.data);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: `image/${photo.format}` });
-      const file = new File([blob], `contract_${Date.now()}.${photo.format}`, {
-        type: `image/${photo.format}`,
-      });
+      // Convert base64 to File using helper function
+      const file = base64ToFile(
+        photo.data,
+        `contract_${Date.now()}.${photo.format}`,
+        `image/${photo.format}`
+      );
 
       // Create a FileList-like object
       const dataTransfer = new DataTransfer();
@@ -41,17 +36,12 @@ const MobileFileUpload: React.FC<MobileFileUploadProps> = ({ onFilesSelected, up
   const handleGalleryPick = async () => {
     const photo = await pickImage();
     if (photo) {
-      // Convert base64 to File
-      const byteCharacters = atob(photo.data);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: `image/${photo.format}` });
-      const file = new File([blob], `contract_${Date.now()}.${photo.format}`, {
-        type: `image/${photo.format}`,
-      });
+      // Convert base64 to File using helper function
+      const file = base64ToFile(
+        photo.data,
+        `contract_${Date.now()}.${photo.format}`,
+        `image/${photo.format}`
+      );
 
       // Create a FileList-like object
       const dataTransfer = new DataTransfer();

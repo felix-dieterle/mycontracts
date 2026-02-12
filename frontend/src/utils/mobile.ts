@@ -89,17 +89,12 @@ export const pickFiles = async (): Promise<File[]> => {
     });
 
     if (image.base64String) {
-      // Convert base64 to File object
-      const byteCharacters = atob(image.base64String);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      const blob = new Blob([byteArray], { type: `image/${image.format}` });
-      const file = new File([blob], `photo_${Date.now()}.${image.format}`, {
-        type: `image/${image.format}`,
-      });
+      // Convert base64 to File object using helper function
+      const file = base64ToFile(
+        image.base64String,
+        `photo_${Date.now()}.${image.format}`,
+        `image/${image.format}`
+      );
       return [file];
     }
   } catch (error) {
@@ -113,6 +108,10 @@ export const pickFiles = async (): Promise<File[]> => {
  * Share a file using the native share dialog
  * @param url URL to the file to share
  * @param title Title for the share dialog
+ * 
+ * Note: The Share API works best with files that are already downloaded or accessible.
+ * For remote URLs, some platforms may require the file to be downloaded first.
+ * Consider using downloadFile() before shareFile() for remote resources.
  */
 export const shareFile = async (url: string, title: string = 'Share File'): Promise<boolean> => {
   try {
