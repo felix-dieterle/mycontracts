@@ -47,21 +47,33 @@ fi
 
 # Get current Java version
 JAVA_VERSION=$(get_current_java_version)
+if [ -z "$JAVA_VERSION" ]; then
+    echo "❌ Error: Could not detect current Java version"
+    echo "Please ensure Java is installed and available in PATH"
+    exit 1
+fi
 echo "Current Java version: $JAVA_VERSION"
 
 # Extract Java version from build.gradle
 GRADLE_JAVA_VERSION=$(extract_gradle_java_version "frontend/android/app/build.gradle")
+if [ -z "$GRADLE_JAVA_VERSION" ]; then
+    echo "❌ Error: Could not extract Java version from build.gradle"
+    echo "Please ensure frontend/android/app/build.gradle contains android.compileOptions with sourceCompatibility"
+    exit 1
+fi
 echo "Required Java version (build.gradle): $GRADLE_JAVA_VERSION"
 
 # Extract Java version from capacitor.build.gradle if it exists
 if [ -f "frontend/android/app/capacitor.build.gradle" ]; then
     CAPACITOR_JAVA_VERSION=$(extract_capacitor_java_version "frontend/android/app/capacitor.build.gradle")
-    echo "Capacitor-generated Java version: $CAPACITOR_JAVA_VERSION"
-    
-    if [ "$CAPACITOR_JAVA_VERSION" != "$GRADLE_JAVA_VERSION" ]; then
-        echo ""
-        echo "⚠️  Warning: Capacitor generated Java $CAPACITOR_JAVA_VERSION, but build.gradle overrides to Java $GRADLE_JAVA_VERSION"
-        echo "   This is expected - build.gradle override takes precedence"
+    if [ -n "$CAPACITOR_JAVA_VERSION" ]; then
+        echo "Capacitor-generated Java version: $CAPACITOR_JAVA_VERSION"
+        
+        if [ "$CAPACITOR_JAVA_VERSION" != "$GRADLE_JAVA_VERSION" ]; then
+            echo ""
+            echo "⚠️  Warning: Capacitor generated Java $CAPACITOR_JAVA_VERSION, but build.gradle overrides to Java $GRADLE_JAVA_VERSION"
+            echo "   This is expected - build.gradle override takes precedence"
+        fi
     fi
 fi
 

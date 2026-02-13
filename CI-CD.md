@@ -24,7 +24,7 @@ Before pushing code that involves Android builds, run the Java version check scr
 ./check-java-version.sh
 ```
 
-This will verify that your local Java version matches the Android build configuration and detect potential build failures early.
+This script will verify that your local Java version matches the Android build configuration and detect potential build failures early. The script is executable and ready to run.
 
 ## Release Workflow
 
