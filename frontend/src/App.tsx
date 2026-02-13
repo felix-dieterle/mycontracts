@@ -3,7 +3,7 @@ import { Routes, Route, Navigate, useNavigate, useParams, useLocation } from 're
 import { FileSummary, FileDetail, MarkerFilter } from './types'
 import { apiBase } from './utils/apiConfig'
 import { getFiltered } from './utils'
-import { styles } from './styles/styles'
+import { getResponsiveStyles } from './styles/styles'
 import { Dashboard } from './components/Dashboard'
 import { FileList } from './components/FileList'
 import { FileDetail as FileDetailComponent } from './components/FileDetail'
@@ -47,6 +47,10 @@ function FilesShell() {
   const [selectedMarkersForDetail, setSelectedMarkersForDetail] = useState<string[]>([])
   const [savingMarkers, setSavingMarkers] = useState(false)
   const [bulkSelection, setBulkSelection] = useState<number[]>([])
+
+  // Get responsive styles
+  const styles = getResponsiveStyles()
+  const isMobileScreen = typeof window !== 'undefined' && window.innerWidth < 768
 
   useEffect(() => {
     fetch(apiBase + '/api/health')
@@ -299,16 +303,16 @@ function FilesShell() {
           <h1 style={styles.title}>⚙️ Vertrags-Cockpit</h1>
           <p style={styles.muted}>Vertragsoptimierung & Zukunftsplanung</p>
         </div>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: isMobileScreen ? '0.5rem' : '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <button 
             onClick={() => navigate('/files')} 
-            style={{ ...styles.primaryButton, padding: '0.5rem 1rem' }}
+            style={styles.primaryButton}
           >
             📄 Files
           </button>
           <button 
             onClick={() => navigate('/tasks')} 
-            style={{ ...styles.primaryButton, padding: '0.5rem 1rem' }}
+            style={styles.primaryButton}
           >
             📅 Tasks
           </button>
@@ -340,7 +344,10 @@ function FilesShell() {
 
       <Dashboard files={files} />
 
-      <div style={{ ...styles.grid, gridTemplateColumns: '320px 1fr 400px' }}>
+      <div style={{ 
+        ...styles.grid, 
+        gridTemplateColumns: isMobileScreen ? '1fr' : '320px 1fr 400px'
+      }}>
         <FileList
           files={visibleFiles}
           selectedId={selectedId}
@@ -397,6 +404,10 @@ function TasksShell() {
   const [savingDueDate, setSavingDueDate] = useState(false)
   const [selectedMarkersForDetail, setSelectedMarkersForDetail] = useState<string[]>([])
   const [savingMarkers, setSavingMarkers] = useState(false)
+
+  // Get responsive styles
+  const styles = getResponsiveStyles()
+  const isMobileScreen = typeof window !== 'undefined' && window.innerWidth < 768
 
   useEffect(() => {
     fetch(apiBase + '/api/health')
@@ -522,16 +533,16 @@ function TasksShell() {
           <h1 style={styles.title}>⚙️ Vertrags-Cockpit</h1>
           <p style={styles.muted}>Vertragsoptimierung & Zukunftsplanung</p>
         </div>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: isMobileScreen ? '0.5rem' : '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <button 
             onClick={() => navigate('/files')} 
-            style={{ ...styles.primaryButton, padding: '0.5rem 1rem' }}
+            style={styles.primaryButton}
           >
             📄 Files
           </button>
           <button 
             onClick={() => navigate('/tasks')} 
-            style={{ ...styles.primaryButton, padding: '0.5rem 1rem' }}
+            style={styles.primaryButton}
           >
             📅 Tasks
           </button>
@@ -547,7 +558,10 @@ function TasksShell() {
         </section>
       )}
 
-      <div style={{ ...styles.grid, gridTemplateColumns: '320px 1fr 400px' }}>
+      <div style={{ 
+        ...styles.grid, 
+        gridTemplateColumns: isMobileScreen ? '1fr' : '320px 1fr 400px'
+      }}>
         <Tasks
           tasks={tasks}
           selectedId={selectedId}
