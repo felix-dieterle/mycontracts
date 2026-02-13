@@ -6,19 +6,34 @@
 set -e
 
 # Function to extract Java major version from build.gradle
+# First checks root build.gradle for subprojects configuration,
+# then falls back to app/build.gradle
 extract_gradle_java_version() {
-    local gradle_file="$1"
-    # Look for sourceCompatibility in android.compileOptions block or afterEvaluate block
-    # First try the direct android.compileOptions pattern
-    local version=$(grep -A 5 "android.compileOptions" "$gradle_file" | \
-        grep "sourceCompatibility" | \
-        sed 's/.*VERSION_//' | \
-        sed 's/[^0-9]*\([0-9]\+\).*/\1/' | \
-        head -1)
+    local app_gradle_file="$1"
+    local root_gradle_file="${app_gradle_file%/app/build.gradle}/build.gradle"
     
-    # If not found, try looking in afterEvaluate block
+    # First try to find version in root build.gradle subprojects block
+    local version=""
+    if [ -f "$root_gradle_file" ]; then
+        version=$(grep -A 15 "subprojects" "$root_gradle_file" | \
+            grep "sourceCompatibility" | \
+            sed 's/.*VERSION_//' | \
+            sed 's/[^0-9]*\([0-9]\+\).*/\1/' | \
+            head -1)
+    fi
+    
+    # If not found in root, try app/build.gradle with direct android.compileOptions pattern
     if [ -z "$version" ]; then
-        version=$(grep -A 10 "afterEvaluate" "$gradle_file" | \
+        version=$(grep -A 5 "android.compileOptions" "$app_gradle_file" | \
+            grep "sourceCompatibility" | \
+            sed 's/.*VERSION_//' | \
+            sed 's/[^0-9]*\([0-9]\+\).*/\1/' | \
+            head -1)
+    fi
+    
+    # If still not found, try looking in afterEvaluate block in app/build.gradle
+    if [ -z "$version" ]; then
+        version=$(grep -A 10 "afterEvaluate" "$app_gradle_file" | \
             grep "sourceCompatibility" | \
             sed 's/.*VERSION_//' | \
             sed 's/[^0-9]*\([0-9]\+\).*/\1/' | \
