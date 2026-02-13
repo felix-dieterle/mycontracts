@@ -36,6 +36,12 @@ subprojects {
                 }
             }
         }
+        // Also configure Kotlin JVM target to match Java target
+        project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+            kotlinOptions {
+                jvmTarget = "17"
+            }
+        }
     }
 }
 
