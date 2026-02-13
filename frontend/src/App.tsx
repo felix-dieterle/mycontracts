@@ -3,7 +3,7 @@ import { Routes, Route, Navigate, useNavigate, useParams, useLocation } from 're
 import { FileSummary, FileDetail, MarkerFilter } from './types'
 import { apiBase } from './utils/apiConfig'
 import { getFiltered } from './utils'
-import { getResponsiveStyles } from './styles/styles'
+import { getResponsiveStyles, isMobileScreen } from './styles/styles'
 import { Dashboard } from './components/Dashboard'
 import { FileList } from './components/FileList'
 import { FileDetail as FileDetailComponent } from './components/FileDetail'
@@ -50,7 +50,7 @@ function FilesShell() {
 
   // Get responsive styles
   const styles = getResponsiveStyles()
-  const isMobileScreen = typeof window !== 'undefined' && window.innerWidth < 768
+  const isMobileView = isMobileScreen()
 
   useEffect(() => {
     fetch(apiBase + '/api/health')
@@ -303,7 +303,7 @@ function FilesShell() {
           <h1 style={styles.title}>⚙️ Vertrags-Cockpit</h1>
           <p style={styles.muted}>Vertragsoptimierung & Zukunftsplanung</p>
         </div>
-        <div style={{ display: 'flex', gap: isMobileScreen ? '0.5rem' : '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: isMobileView ? '0.5rem' : '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <button 
             onClick={() => navigate('/files')} 
             style={styles.primaryButton}
@@ -346,7 +346,7 @@ function FilesShell() {
 
       <div style={{ 
         ...styles.grid, 
-        gridTemplateColumns: isMobileScreen ? '1fr' : '320px 1fr 400px'
+        gridTemplateColumns: isMobileView ? '1fr' : '320px 1fr 400px'
       }}>
         <FileList
           files={visibleFiles}
@@ -407,7 +407,7 @@ function TasksShell() {
 
   // Get responsive styles
   const styles = getResponsiveStyles()
-  const isMobileScreen = typeof window !== 'undefined' && window.innerWidth < 768
+  const isMobileView = isMobileScreen()
 
   useEffect(() => {
     fetch(apiBase + '/api/health')
@@ -533,7 +533,7 @@ function TasksShell() {
           <h1 style={styles.title}>⚙️ Vertrags-Cockpit</h1>
           <p style={styles.muted}>Vertragsoptimierung & Zukunftsplanung</p>
         </div>
-        <div style={{ display: 'flex', gap: isMobileScreen ? '0.5rem' : '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: isMobileView ? '0.5rem' : '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <button 
             onClick={() => navigate('/files')} 
             style={styles.primaryButton}
@@ -560,7 +560,7 @@ function TasksShell() {
 
       <div style={{ 
         ...styles.grid, 
-        gridTemplateColumns: isMobileScreen ? '1fr' : '320px 1fr 400px'
+        gridTemplateColumns: isMobileView ? '1fr' : '320px 1fr 400px'
       }}>
         <Tasks
           tasks={tasks}

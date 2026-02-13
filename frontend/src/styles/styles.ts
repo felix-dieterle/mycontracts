@@ -2,13 +2,17 @@ import React from 'react'
 
 /**
  * Detect if the current device is mobile based on screen width
+ * Note: This detection happens at render time and won't automatically update on window resize.
+ * For dynamic updates on resize, components should use React state with a resize event listener.
  */
-const isMobileScreen = (): boolean => {
+export const isMobileScreen = (): boolean => {
   return typeof window !== 'undefined' && window.innerWidth < 768
 }
 
 /**
  * Get responsive styles based on screen size
+ * Note: Styles are calculated at render time. For automatic updates on window resize,
+ * components should trigger re-renders using React state and resize event listeners.
  */
 export const getResponsiveStyles = (): Record<string, React.CSSProperties> => {
   const isMobile = isMobileScreen()
