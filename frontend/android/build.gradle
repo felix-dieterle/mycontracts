@@ -24,6 +24,21 @@ allprojects {
     }
 }
 
+// Override Java version for all subprojects to match CI Java version (17)
+// This is necessary because capacitor.build.gradle sets Java 21, but CI uses Java 17
+subprojects {
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            project.android {
+                compileOptions {
+                    sourceCompatibility JavaVersion.VERSION_17
+                    targetCompatibility JavaVersion.VERSION_17
+                }
+            }
+        }
+    }
+}
+
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
