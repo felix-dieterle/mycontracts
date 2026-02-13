@@ -46,9 +46,14 @@ apply from: 'capacitor.build.gradle'
 
 // Override auto-generated Java version from capacitor.build.gradle
 // to match the installed Java version (17)
-android.compileOptions {
-    sourceCompatibility JavaVersion.VERSION_17
-    targetCompatibility JavaVersion.VERSION_17
+// Using afterEvaluate to ensure this override happens after all other configurations
+afterEvaluate {
+    android {
+        compileOptions {
+            sourceCompatibility JavaVersion.VERSION_17
+            targetCompatibility JavaVersion.VERSION_17
+        }
+    }
 }
 
 try {
