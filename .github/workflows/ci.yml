@@ -27,6 +27,15 @@ jobs:
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
 
+  validate-android-java-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check Java version compatibility
+        run: ./check-java-version.sh
+
   backend-test:
     runs-on: ubuntu-latest
     steps:

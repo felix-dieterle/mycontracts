@@ -12,8 +12,18 @@ permissions:
   contents: write
 
 jobs:
+  validate-android-java-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check Java version compatibility
+        run: ./check-java-version.sh
+
   build-and-release:
     runs-on: ubuntu-latest
+    needs: validate-android-java-version
     steps:
       - name: Checkout
         uses: actions/checkout@v4

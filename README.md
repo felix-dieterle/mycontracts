@@ -629,9 +629,11 @@ mycontracts/
 ## Entwicklung lokal
 
 ### Prerequisites
-- Java 17+
+- Java 17+ (required for backend and Android builds)
 - Node.js 18+
 - npm/yarn
+
+**Note:** For Android development, ensure your Java version matches the build configuration. Run `./check-java-version.sh` to verify compatibility before building the Android app.
 
 ### Backend starten
 ```bash
