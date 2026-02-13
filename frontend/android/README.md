@@ -204,6 +204,35 @@ All permissions are requested at runtime when needed.
 
 ## Troubleshooting
 
+### Build Fails with "invalid source release" or Java Version Error
+
+If you see an error like `error: invalid source release: 21`:
+
+1. **Check your Java version:**
+   ```bash
+   java -version
+   ```
+
+2. **Ensure you're using Java 17 or compatible version:**
+   - The project is configured to use Java 17
+   - If you have Java 21+, the build.gradle is already configured to override it to Java 17
+   - If you have Java < 17, you need to upgrade
+
+3. **Verify the fix is in place:**
+   The root `build.gradle` should contain:
+   ```gradle
+   subprojects {
+       afterEvaluate { project ->
+           if (project.hasProperty('android')) {
+               project.android.compileOptions {
+                   sourceCompatibility JavaVersion.VERSION_17
+                   targetCompatibility JavaVersion.VERSION_17
+               }
+           }
+       }
+   }
+   ```
+
 ### Build Fails with "SDK not found"
 
 Install Android SDK via Android Studio or set `ANDROID_HOME`:
