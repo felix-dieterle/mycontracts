@@ -8,12 +8,24 @@ set -e
 # Function to extract Java major version from build.gradle
 extract_gradle_java_version() {
     local gradle_file="$1"
-    # Look for sourceCompatibility in android.compileOptions block specifically
-    grep -A 5 "android.compileOptions" "$gradle_file" | \
+    # Look for sourceCompatibility in android.compileOptions block or afterEvaluate block
+    # First try the direct android.compileOptions pattern
+    local version=$(grep -A 5 "android.compileOptions" "$gradle_file" | \
         grep "sourceCompatibility" | \
         sed 's/.*VERSION_//' | \
         sed 's/[^0-9]*\([0-9]\+\).*/\1/' | \
-        head -1
+        head -1)
+    
+    # If not found, try looking in afterEvaluate block
+    if [ -z "$version" ]; then
+        version=$(grep -A 10 "afterEvaluate" "$gradle_file" | \
+            grep "sourceCompatibility" | \
+            sed 's/.*VERSION_//' | \
+            sed 's/[^0-9]*\([0-9]\+\).*/\1/' | \
+            head -1)
+    fi
+    
+    echo "$version"
 }
 
 # Function to extract Java major version from capacitor.build.gradle
