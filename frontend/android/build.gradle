@@ -36,15 +36,13 @@ subprojects {
                 }
             }
         }
-        // Also configure Kotlin JVM target to match Java target (if Kotlin is used)
-        try {
-            project.tasks.withType(Class.forName('org.jetbrains.kotlin.gradle.tasks.KotlinCompile')).configureEach {
+        // Also configure Kotlin JVM target to match Java target (if Kotlin plugin is applied)
+        project.plugins.withId('org.jetbrains.kotlin.android') {
+            project.tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
                 kotlinOptions {
                     jvmTarget = "17"
                 }
             }
-        } catch (ClassNotFoundException e) {
-            // Kotlin plugin not applied, skip Kotlin configuration
         }
     }
 }
