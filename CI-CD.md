@@ -9,11 +9,22 @@ The CI workflow runs automatically on:
 - **Pull Requests** targeting `main` or `dev` branches
 
 ### What it does:
-1. **Backend Tests** - Runs Maven tests for the Spring Boot backend
-2. **Frontend Build** - Builds the React frontend with Vite
-3. **UI Tests** - Runs Playwright end-to-end tests
+1. **Java Version Validation** - Checks Android build configuration for Java version compatibility
+2. **Backend Tests** - Runs Maven tests for the Spring Boot backend
+3. **Frontend Build** - Builds the React frontend with Vite
+4. **UI Tests** - Runs Playwright end-to-end tests
 
 All tests must pass before code can be merged.
+
+### Local Build Validation
+
+Before pushing code that involves Android builds, run the Java version check script:
+
+```bash
+./check-java-version.sh
+```
+
+This will verify that your local Java version matches the Android build configuration and detect potential build failures early.
 
 ## Release Workflow
 

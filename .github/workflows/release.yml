@@ -12,8 +12,44 @@ permissions:
   contents: write
 
 jobs:
+  validate-android-java-version:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check Java version compatibility
+        run: |
+          # Check if Android project exists
+          if [ ! -f "frontend/android/app/build.gradle" ]; then
+            echo "Android project not found, skipping Java version validation"
+            exit 0
+          fi
+          
+          # Extract Java version from build.gradle
+          GRADLE_JAVA_VERSION=$(grep -A 2 "android.compileOptions" frontend/android/app/build.gradle | grep "sourceCompatibility" | sed 's/.*VERSION_//' | sed 's/[^0-9]//g' | head -1)
+          
+          # Extract Java version from capacitor.build.gradle if it exists
+          if [ -f "frontend/android/app/capacitor.build.gradle" ]; then
+            CAPACITOR_JAVA_VERSION=$(grep "sourceCompatibility" frontend/android/app/capacitor.build.gradle | sed 's/.*VERSION_//' | sed 's/[^0-9]//g' | head -1)
+            echo "Capacitor-generated Java version: $CAPACITOR_JAVA_VERSION"
+          fi
+          
+          echo "Gradle Java version: $GRADLE_JAVA_VERSION"
+          
+          # Check if version is valid (we're using Java 17 in CI)
+          if [ "$GRADLE_JAVA_VERSION" != "17" ]; then
+            echo "❌ Error: Java version mismatch!"
+            echo "The Android build is configured for Java $GRADLE_JAVA_VERSION, but CI uses Java 17"
+            echo "Please update frontend/android/app/build.gradle to use Java 17"
+            exit 1
+          fi
+          
+          echo "✅ Java version check passed: Java 17"
+
   build-and-release:
     runs-on: ubuntu-latest
+    needs: validate-android-java-version
     steps:
       - name: Checkout
         uses: actions/checkout@v4
