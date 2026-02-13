@@ -224,9 +224,11 @@ If you see an error like `error: invalid source release: 21`:
    subprojects {
        afterEvaluate { project ->
            if (project.hasProperty('android')) {
-               project.android.compileOptions {
-                   sourceCompatibility JavaVersion.VERSION_17
-                   targetCompatibility JavaVersion.VERSION_17
+               project.android {
+                   compileOptions {
+                       sourceCompatibility JavaVersion.VERSION_17
+                       targetCompatibility JavaVersion.VERSION_17
+                   }
                }
            }
        }
