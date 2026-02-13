@@ -5,6 +5,37 @@
 
 set -e
 
+# Function to extract Java major version from build.gradle
+extract_gradle_java_version() {
+    local gradle_file="$1"
+    # Look for sourceCompatibility in android.compileOptions block specifically
+    grep -A 5 "android.compileOptions" "$gradle_file" | \
+        grep "sourceCompatibility" | \
+        sed 's/.*VERSION_//' | \
+        sed 's/[^0-9]*\([0-9]\+\).*/\1/' | \
+        head -1
+}
+
+# Function to extract Java major version from capacitor.build.gradle
+extract_capacitor_java_version() {
+    local capacitor_file="$1"
+    grep "sourceCompatibility" "$capacitor_file" | \
+        sed 's/.*VERSION_//' | \
+        sed 's/[^0-9]*\([0-9]\+\).*/\1/' | \
+        head -1
+}
+
+# Function to extract current Java major version
+get_current_java_version() {
+    # Extract major version from various Java version formats
+    # Examples: "17.0.18", "1.8.0_292", "21", "11.0.12"
+    java -version 2>&1 | grep -i version | \
+        sed 's/.*"\([0-9.]*\)".*/\1/' | \
+        sed 's/^1\.//' | \
+        sed 's/\..*//' | \
+        head -1
+}
+
 echo "🔍 Checking Java version compatibility..."
 echo ""
 
@@ -15,16 +46,16 @@ if [ ! -f "frontend/android/app/build.gradle" ]; then
 fi
 
 # Get current Java version
-JAVA_VERSION=$(java -version 2>&1 | grep -i version | sed 's/.*version "\([0-9]*\).*/\1/')
+JAVA_VERSION=$(get_current_java_version)
 echo "Current Java version: $JAVA_VERSION"
 
 # Extract Java version from build.gradle
-GRADLE_JAVA_VERSION=$(grep -A 2 "android.compileOptions" frontend/android/app/build.gradle | grep "sourceCompatibility" | sed 's/.*VERSION_//' | sed 's/[^0-9]//g' | head -1)
+GRADLE_JAVA_VERSION=$(extract_gradle_java_version "frontend/android/app/build.gradle")
 echo "Required Java version (build.gradle): $GRADLE_JAVA_VERSION"
 
 # Extract Java version from capacitor.build.gradle if it exists
 if [ -f "frontend/android/app/capacitor.build.gradle" ]; then
-    CAPACITOR_JAVA_VERSION=$(grep "sourceCompatibility" frontend/android/app/capacitor.build.gradle | sed 's/.*VERSION_//' | sed 's/[^0-9]//g' | head -1)
+    CAPACITOR_JAVA_VERSION=$(extract_capacitor_java_version "frontend/android/app/capacitor.build.gradle")
     echo "Capacitor-generated Java version: $CAPACITOR_JAVA_VERSION"
     
     if [ "$CAPACITOR_JAVA_VERSION" != "$GRADLE_JAVA_VERSION" ]; then
