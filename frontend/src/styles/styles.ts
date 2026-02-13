@@ -1,12 +1,17 @@
 import React from 'react'
 
 /**
+ * Mobile breakpoint in pixels
+ */
+export const MOBILE_BREAKPOINT = 768
+
+/**
  * Detect if the current device is mobile based on screen width
  * Note: This detection happens at render time and won't automatically update on window resize.
  * For dynamic updates on resize, components should use React state with a resize event listener.
  */
 export const isMobileScreen = (): boolean => {
-  return typeof window !== 'undefined' && window.innerWidth < 768
+  return typeof window !== 'undefined' && window.innerWidth < MOBILE_BREAKPOINT
 }
 
 /**

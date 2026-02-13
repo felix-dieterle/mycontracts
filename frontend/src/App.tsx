@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { Routes, Route, Navigate, useNavigate, useParams, useLocation } from 'react-router-dom'
 import { FileSummary, FileDetail, MarkerFilter } from './types'
 import { apiBase } from './utils/apiConfig'
@@ -48,9 +48,9 @@ function FilesShell() {
   const [savingMarkers, setSavingMarkers] = useState(false)
   const [bulkSelection, setBulkSelection] = useState<number[]>([])
 
-  // Get responsive styles
-  const styles = getResponsiveStyles()
-  const isMobileView = isMobileScreen()
+  // Get responsive styles - memoized to avoid recalculation on every render
+  const styles = useMemo(() => getResponsiveStyles(), [])
+  const isMobileView = useMemo(() => isMobileScreen(), [])
 
   useEffect(() => {
     fetch(apiBase + '/api/health')
@@ -405,9 +405,9 @@ function TasksShell() {
   const [selectedMarkersForDetail, setSelectedMarkersForDetail] = useState<string[]>([])
   const [savingMarkers, setSavingMarkers] = useState(false)
 
-  // Get responsive styles
-  const styles = getResponsiveStyles()
-  const isMobileView = isMobileScreen()
+  // Get responsive styles - memoized to avoid recalculation on every render
+  const styles = useMemo(() => getResponsiveStyles(), [])
+  const isMobileView = useMemo(() => isMobileScreen(), [])
 
   useEffect(() => {
     fetch(apiBase + '/api/health')
