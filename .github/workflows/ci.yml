@@ -80,6 +80,43 @@ jobs:
         working-directory: frontend
         run: npm run build
 
+  android-build:
+    runs-on: ubuntu-latest
+    needs: [check-frontend, validate-android-java-version]
+    if: needs.check-frontend.outputs.frontend-exists == 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Sync Capacitor
+        working-directory: frontend
+        run: npx cap sync android
+
+      - name: Build Android Debug APK
+        working-directory: frontend/android
+        run: ./gradlew assembleDebug
+
   ui-tests:
     runs-on: ubuntu-latest
     needs: check-frontend
