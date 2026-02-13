@@ -295,7 +295,16 @@ export const getResponsiveStyles = (): Record<string, React.CSSProperties> => {
   }
 }
 
-// Export static styles for backward compatibility
+/**
+ * Static styles export computed at module load time.
+ * 
+ * WARNING: This export uses the screen size at the time the module is loaded
+ * and will NOT update on window resize. This is intentional for performance
+ * and works well for components that don't need to respond to size changes.
+ * 
+ * For components that need fresh styles on each render (e.g., top-level layouts),
+ * call getResponsiveStyles() directly or use useMemo as shown in App.tsx.
+ */
 export const styles = getResponsiveStyles()
 
 export function markerBadgeStyle(marker: string): React.CSSProperties {

@@ -48,7 +48,11 @@ function FilesShell() {
   const [savingMarkers, setSavingMarkers] = useState(false)
   const [bulkSelection, setBulkSelection] = useState<number[]>([])
 
-  // Get responsive styles - memoized to avoid recalculation on every render
+  // Get responsive styles - memoized at mount time for performance
+  // Note: Styles are cached and won't update on window resize. This is intentional
+  // to avoid recalculating styles on every render. The initial screen size determines
+  // the layout, which is appropriate for mobile APK usage where orientation changes
+  // typically trigger a full app reload.
   const styles = useMemo(() => getResponsiveStyles(), [])
   const isMobileView = useMemo(() => isMobileScreen(), [])
 
@@ -405,7 +409,11 @@ function TasksShell() {
   const [selectedMarkersForDetail, setSelectedMarkersForDetail] = useState<string[]>([])
   const [savingMarkers, setSavingMarkers] = useState(false)
 
-  // Get responsive styles - memoized to avoid recalculation on every render
+  // Get responsive styles - memoized at mount time for performance
+  // Note: Styles are cached and won't update on window resize. This is intentional
+  // to avoid recalculating styles on every render. The initial screen size determines
+  // the layout, which is appropriate for mobile APK usage where orientation changes
+  // typically trigger a full app reload.
   const styles = useMemo(() => getResponsiveStyles(), [])
   const isMobileView = useMemo(() => isMobileScreen(), [])
 
