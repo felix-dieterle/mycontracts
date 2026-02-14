@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import { Routes, Route, Navigate, useNavigate, useParams, useLocation } from 'react-router-dom'
 import { FileSummary, FileDetail, MarkerFilter } from './types'
 import { apiBase } from './utils/apiConfig'
 import { getFiltered } from './utils'
-import { styles } from './styles/styles'
+import { getResponsiveStyles, isMobileScreen } from './styles/styles'
 import { Dashboard } from './components/Dashboard'
 import { FileList } from './components/FileList'
 import { FileDetail as FileDetailComponent } from './components/FileDetail'
@@ -47,6 +47,14 @@ function FilesShell() {
   const [selectedMarkersForDetail, setSelectedMarkersForDetail] = useState<string[]>([])
   const [savingMarkers, setSavingMarkers] = useState(false)
   const [bulkSelection, setBulkSelection] = useState<number[]>([])
+
+  // Get responsive styles - memoized at mount time for performance
+  // Note: Styles are cached and won't update on window resize. This is intentional
+  // to avoid recalculating styles on every render. The initial screen size determines
+  // the layout, which is appropriate for mobile APK usage where orientation changes
+  // typically trigger a full app reload.
+  const styles = useMemo(() => getResponsiveStyles(), [])
+  const isMobileView = useMemo(() => isMobileScreen(), [])
 
   useEffect(() => {
     fetch(apiBase + '/api/health')
@@ -299,16 +307,16 @@ function FilesShell() {
           <h1 style={styles.title}>⚙️ Vertrags-Cockpit</h1>
           <p style={styles.muted}>Vertragsoptimierung & Zukunftsplanung</p>
         </div>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: isMobileView ? '0.5rem' : '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <button 
             onClick={() => navigate('/files')} 
-            style={{ ...styles.primaryButton, padding: '0.5rem 1rem' }}
+            style={styles.primaryButton}
           >
             📄 Files
           </button>
           <button 
             onClick={() => navigate('/tasks')} 
-            style={{ ...styles.primaryButton, padding: '0.5rem 1rem' }}
+            style={styles.primaryButton}
           >
             📅 Tasks
           </button>
@@ -340,7 +348,10 @@ function FilesShell() {
 
       <Dashboard files={files} />
 
-      <div style={{ ...styles.grid, gridTemplateColumns: '320px 1fr 400px' }}>
+      <div style={{ 
+        ...styles.grid, 
+        gridTemplateColumns: isMobileView ? '1fr' : '320px 1fr 400px'
+      }}>
         <FileList
           files={visibleFiles}
           selectedId={selectedId}
@@ -397,6 +408,14 @@ function TasksShell() {
   const [savingDueDate, setSavingDueDate] = useState(false)
   const [selectedMarkersForDetail, setSelectedMarkersForDetail] = useState<string[]>([])
   const [savingMarkers, setSavingMarkers] = useState(false)
+
+  // Get responsive styles - memoized at mount time for performance
+  // Note: Styles are cached and won't update on window resize. This is intentional
+  // to avoid recalculating styles on every render. The initial screen size determines
+  // the layout, which is appropriate for mobile APK usage where orientation changes
+  // typically trigger a full app reload.
+  const styles = useMemo(() => getResponsiveStyles(), [])
+  const isMobileView = useMemo(() => isMobileScreen(), [])
 
   useEffect(() => {
     fetch(apiBase + '/api/health')
@@ -522,16 +541,16 @@ function TasksShell() {
           <h1 style={styles.title}>⚙️ Vertrags-Cockpit</h1>
           <p style={styles.muted}>Vertragsoptimierung & Zukunftsplanung</p>
         </div>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: isMobileView ? '0.5rem' : '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
           <button 
             onClick={() => navigate('/files')} 
-            style={{ ...styles.primaryButton, padding: '0.5rem 1rem' }}
+            style={styles.primaryButton}
           >
             📄 Files
           </button>
           <button 
             onClick={() => navigate('/tasks')} 
-            style={{ ...styles.primaryButton, padding: '0.5rem 1rem' }}
+            style={styles.primaryButton}
           >
             📅 Tasks
           </button>
@@ -547,7 +566,10 @@ function TasksShell() {
         </section>
       )}
 
-      <div style={{ ...styles.grid, gridTemplateColumns: '320px 1fr 400px' }}>
+      <div style={{ 
+        ...styles.grid, 
+        gridTemplateColumns: isMobileView ? '1fr' : '320px 1fr 400px'
+      }}>
         <Tasks
           tasks={tasks}
           selectedId={selectedId}
