@@ -75,3 +75,38 @@ export type ContractOptimizationResponse = {
   improvements: string[]
   summary: string
 }
+
+export type EmailAccount = {
+  id: number
+  name: string
+  host: string
+  port: number
+  protocol: string
+  username: string
+  active: boolean
+  lastSync?: string | null
+  createdAt?: string
+}
+
+export type BankAccount = {
+  id: number
+  name: string
+  iban?: string | null
+  bankName?: string | null
+  apiProvider?: string | null
+  active: boolean
+  lastSync?: string | null
+  createdAt?: string
+}
+
+export type BankTransaction = {
+  id: number
+  bankAccountId: number
+  date?: string | null
+  amount?: number | null
+  counterparty?: string | null
+  description?: string | null
+  category?: string | null
+  reference?: string | null
+  importedAt?: string
+}

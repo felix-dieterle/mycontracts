@@ -9,6 +9,7 @@ import { FileList } from './components/FileList'
 import { FileDetail as FileDetailComponent } from './components/FileDetail'
 import { Chat } from './components/Chat'
 import { Tasks } from './components/Tasks'
+import { Accounts } from './components/Accounts'
 import MobileFileUpload from './components/MobileFileUpload'
 import { isMobile } from './utils/mobile'
 
@@ -20,6 +21,7 @@ export default function App() {
       <Route path="/files/:id" element={<FilesShell />} />
       <Route path="/tasks" element={<TasksShell />} />
       <Route path="/tasks/:id" element={<TasksShell />} />
+      <Route path="/accounts" element={<AccountsShell />} />
       <Route path="*" element={<Navigate to="/files" replace />} />
     </Routes>
   )
@@ -320,6 +322,12 @@ function FilesShell() {
           >
             📅 Tasks
           </button>
+          <button
+            onClick={() => navigate('/accounts')}
+            style={styles.primaryButton}
+          >
+            🏦 Konten
+          </button>
           <span style={{ ...styles.status, backgroundColor: health === 'ok' ? '#c5f6c5' : '#ffe3e3' }}>
             Backend: {health}
           </span>
@@ -554,6 +562,12 @@ function TasksShell() {
           >
             📅 Tasks
           </button>
+          <button
+            onClick={() => navigate('/accounts')}
+            style={styles.primaryButton}
+          >
+            🏦 Konten
+          </button>
           <span style={{ ...styles.status, backgroundColor: health === 'ok' ? '#c5f6c5' : '#ffe3e3' }}>
             Backend: {health}
           </span>
@@ -595,6 +609,46 @@ function TasksShell() {
 
         <Chat fileId={selectedId} filename={detail?.filename} />
       </div>
+    </div>
+  )
+}
+
+function AccountsShell() {
+  const navigate = useNavigate()
+  const [health, setHealth] = useState<'loading' | 'ok' | 'offline'>('loading')
+  const styles = useMemo(() => getResponsiveStyles(), [])
+  const isMobileView = useMemo(() => isMobileScreen(), [])
+
+  useEffect(() => {
+    fetch(apiBase + '/api/health')
+      .then(r => r.json())
+      .then(j => setHealth(j.status === 'UP' ? 'ok' : 'offline'))
+      .catch(() => setHealth('offline'))
+  }, [])
+
+  return (
+    <div style={styles.page}>
+      <header style={styles.header}>
+        <div>
+          <h1 style={styles.title}>⚙️ Vertrags-Cockpit</h1>
+          <p style={styles.muted}>Vertragsoptimierung & Zukunftsplanung</p>
+        </div>
+        <div style={{ display: 'flex', gap: isMobileView ? '0.5rem' : '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <button onClick={() => navigate('/files')} style={styles.primaryButton}>
+            📄 Files
+          </button>
+          <button onClick={() => navigate('/tasks')} style={styles.primaryButton}>
+            📅 Tasks
+          </button>
+          <button onClick={() => navigate('/accounts')} style={styles.primaryButton}>
+            🏦 Konten
+          </button>
+          <span style={{ ...styles.status, backgroundColor: health === 'ok' ? '#c5f6c5' : '#ffe3e3' }}>
+            Backend: {health}
+          </span>
+        </div>
+      </header>
+      <Accounts />
     </div>
   )
 }
