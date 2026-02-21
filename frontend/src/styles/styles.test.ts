@@ -26,7 +26,10 @@ describe('getResponsiveStyles', () => {
     const styles = getResponsiveStyles()
 
     // Check page padding is reduced for mobile
-    expect(styles.page.padding).toBe('12px')
+    expect(styles.page.paddingTop).toBe('max(12px, env(safe-area-inset-top))')
+    expect(styles.page.paddingBottom).toBe('max(12px, env(safe-area-inset-bottom))')
+    expect(styles.page.paddingLeft).toBe('max(12px, env(safe-area-inset-left))')
+    expect(styles.page.paddingRight).toBe('max(12px, env(safe-area-inset-right))')
     
     // Check grid uses single column for mobile
     expect(styles.grid.gridTemplateColumns).toBe('1fr')
@@ -48,7 +51,10 @@ describe('getResponsiveStyles', () => {
     const styles = getResponsiveStyles()
 
     // Check page padding is normal for desktop
-    expect(styles.page.padding).toBe('24px')
+    expect(styles.page.paddingTop).toBe('24px')
+    expect(styles.page.paddingBottom).toBe('24px')
+    expect(styles.page.paddingLeft).toBe('24px')
+    expect(styles.page.paddingRight).toBe('24px')
     
     // Check grid uses two columns for desktop
     expect(styles.grid.gridTemplateColumns).toBe('320px 1fr')
